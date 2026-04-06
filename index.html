@@ -1390,46 +1390,7 @@ tr.atm-row td.strike-cell { color:var(--accent); }
 
 </head>
 <body>
-<div id="localFileWarning" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(7,11,18,0.97);display:flex;align-items:center;justify-content:center;">
-  <div style="max-width:340px;padding:28px 24px;text-align:center;font-family:monospace;">
-    <div style="font-size:40px;margin-bottom:16px;">🔒</div>
-    <div style="font-size:16px;font-weight:bold;color:#ff3d6b;margin-bottom:12px;">LOCAL FILE MEIN NETWORK BLOCKED HAI</div>
-    <div style="font-size:12px;color:#7a9abf;line-height:1.8;margin-bottom:20px;">
-      EMA chart aur expiry load hone ke liye<br>
-      <span style="color:#00e5a0;font-weight:bold;">Chrome browser</span> mein kholna zaroori hai
-    </div>
-    <div style="background:#111c2e;border:1px solid #1e3050;border-radius:8px;padding:14px;margin-bottom:16px;text-align:left;">
-      <div style="font-size:11px;color:#ffd000;margin-bottom:8px;">📱 Android pe kholne ka tarika:</div>
-      <div style="font-size:11px;color:#ddeeff;line-height:2;">
-        1. File ko download folder mein rakho<br>
-        2. <span style="color:#00e5a0;">Chrome</span> browser kholo<br>
-        3. Address bar mein type karo:<br>
-        <span style="color:#00c9ff;font-size:10px;">file:///storage/emulated/0/Download/index.html</span>
-      </div>
-    </div>
-    <div style="background:#0d2a1a;border:1px solid #00e5a044;border-radius:8px;padding:14px;margin-bottom:20px;text-align:left;">
-      <div style="font-size:11px;color:#00e5a0;margin-bottom:8px;">✅ Best option — GitHub Pages (ek baar setup):</div>
-      <div style="font-size:11px;color:#ddeeff;line-height:2;">
-        1. github.com/Navinsuvarna8355/optionchain<br>
-        2. Settings → Pages → Branch: main<br>
-        3. URL milega: <span style="color:#00c9ff;">navinsuvarna8355.github.io/optionchain</span><br>
-        4. Woh URL bookmark karo — hamesha kaam karega
-      </div>
-    </div>
-    <button onclick="document.getElementById('localFileWarning').style.display='none'" 
-      style="padding:10px 24px;background:#1e3050;border:1px solid #4a6a8a;color:#7a9abf;border-radius:6px;cursor:pointer;font-family:monospace;font-size:11px;">
-      Ignore karo (chain data only chalega, EMA nahi)
-    </button>
-  </div>
-</div>
-<script>
-  const _loc = location.href;
-  const _isLocal = location.protocol === 'file:' || 
-    (_loc.includes('content://') && !_loc.includes('github') && !_loc.includes('localhost'));
-  if (_isLocal) {
-    document.getElementById('localFileWarning').style.display = 'flex';
-  }
-</script>
+
 <div class="app">
 
 <div class="header">
@@ -4347,9 +4308,9 @@ function runAlerts() {
   // Send notification if enabled
   alerts.slice(0,3).forEach(a => {
     if (a.type === 'bull' && document.getElementById('tog_bull')?.classList.contains('on'))
-      sendNotification(a.title + '\n' + a.desc);
+      sendNotification(a.title + ' - ' + a.desc, a.title, a.type || 'spike');
     if (a.type === 'bear' && document.getElementById('tog_bear')?.classList.contains('on'))
-      sendNotification(a.title + '\n' + a.desc);
+      sendNotification(a.title + ' - ' + a.desc, a.title, a.type || 'spike');
     if (document.getElementById('tog_spike')?.classList.contains('on'))
       logNotif(a.title);
   });
@@ -5820,13 +5781,6 @@ async function ghGetFile(path) {
   if(!r.ok) throw new Error(`GET ${r.status}`);
   return r.json();
 }
-// Global save queue to prevent concurrent GitHub PUTs (409 conflicts)
-let _ghQueue = Promise.resolve();
-function ghEnqueue(fn) {
-  _ghQueue = _ghQueue.then(fn, fn);
-  return _ghQueue;
-}
-
 async function ghPutFile(path,str,msg,sha) {
   const {token,user,repo,branch}=ghConfig();
   // Proper UTF-8 safe base64 encoding (chunk-based for large files)
@@ -5843,28 +5797,9 @@ async function ghPutFile(path,str,msg,sha) {
     {method:'PUT',headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
   if(!r.ok) {
     const errBody = await r.json().catch(() => ({}));
-    const err = new Error(`GitHub ${r.status}: ${errBody.message || 'unknown error'}`);
-    err.status = r.status;
-    throw err;
+    throw new Error(`GitHub ${r.status}: ${errBody.message || 'unknown error'}`);
   }
   return r.json();
-}
-
-// Retry PUT with fresh SHA fetch on 409 conflict (up to 3 attempts)
-async function ghPutWithRetry(path, contentFn, msg, maxRetries=3) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const existing = await ghGetFile(path);
-      const content = typeof contentFn === 'function' ? contentFn(existing) : contentFn;
-      return await ghPutFile(path, content, msg, existing?.sha || null);
-    } catch(e) {
-      if (e.status === 409 && attempt < maxRetries) {
-        await new Promise(r => setTimeout(r, 300 * attempt)); // backoff
-        continue;
-      }
-      throw e;
-    }
-  }
 }
 function buildOISnapshot() {
   if(!chainData||!chainData.length) return null;
@@ -5899,12 +5834,18 @@ async function saveOISnapshot() {
   const path=`${symbol}/${month}/${fname}`;
   updateGhStatus(`⏳ Saving ${symbol}...`,'#ff9f40');
   try {
-    await ghEnqueue(() => ghPutWithRetry(
-      path,
-      () => JSON.stringify(snap,null,2),
-      `OI ${symbol} ${date} ${snap.time}`
-    ));
-    updateGhStatus(`✓ ${fname}`,'#00e5a0');
+    const existing=await ghGetFile(path);
+    try {
+      await ghPutFile(path,JSON.stringify(snap,null,2),`OI ${symbol} ${date} ${snap.time}`,existing?.sha||null);
+      updateGhStatus(`✓ ${fname}`,'#00e5a0');
+    } catch(e2) {
+      if (e2.message.includes('409')) {
+        // SHA mismatch — re-fetch and retry
+        const refetch = await ghGetFile(path);
+        await ghPutFile(path,JSON.stringify(snap,null,2),`OI ${symbol} ${date} ${snap.time}`,refetch?.sha||null);
+        updateGhStatus(`✓ ${fname} (retry)`,'#00e5a0');
+      } else { throw e2; }
+    }
   } catch(e) { updateGhStatus(`✗ ${e.message}`,'#ff3d6b'); }
   _ghSaving=false;
 }
@@ -6165,22 +6106,38 @@ async function saveCSVRow() {
 
     updateGhStatus(`⏳ CSV saving ${time}...`, '#ff9f40');
 
-    await ghEnqueue(() => ghPutWithRetry(
-      path,
-      (existing) => {
-        if (existing) {
-          const b64clean = existing.content.replace(/[\s]/g, '');
-          const decoded = new TextDecoder().decode(
-            Uint8Array.from(atob(b64clean), c => c.charCodeAt(0))
-          );
-          return decoded.trimEnd() + '\n' + row;
-        } else {
-          return CSV_HEADERS + '\n' + row + '\n';
-        }
-      },
-      `CSV ${symbol} ${date} ${time}`
-    ));
-    updateGhStatus(`✓ CSV row saved ${time}`, '#00e5a0');
+    // Get existing file
+    const existing = await ghGetFile(path);
+
+    let csvContent, sha;
+    if (existing) {
+      // Decode existing CSV and append new row
+      // Proper base64 decode - strip all whitespace from base64
+      const b64clean = existing.content.replace(/[\s]/g, '');
+      const decoded = new TextDecoder().decode(
+        Uint8Array.from(atob(b64clean), c => c.charCodeAt(0))
+      );
+      csvContent = decoded.trimEnd() + '\n' + row;
+      sha = existing.sha;
+    } else {
+      // New file — add headers + first row
+      csvContent = CSV_HEADERS + '\n' + row + '\n';
+      sha = null;
+    }
+
+    try {
+      await ghPutFile(path, csvContent, `CSV ${symbol} ${date} ${time}`, sha);
+      updateGhStatus(`✓ CSV row saved ${time}`, '#00e5a0');
+    } catch(e2) {
+      if (e2.message.includes('409')) {
+        // SHA mismatch — re-fetch and retry
+        const refetch2 = await ghGetFile(path);
+        const decoded2 = refetch2 ? new TextDecoder().decode(Uint8Array.from(atob(refetch2.content.replace(/[\s]/g,'')), c=>c.charCodeAt(0))) : '';
+        const retryContent = decoded2 ? decoded2.trimEnd() + String.fromCharCode(10) + row : csvContent;
+        await ghPutFile(path, retryContent, `CSV ${symbol} ${date} ${time}`, refetch2?.sha||null);
+        updateGhStatus(`✓ CSV saved ${time} (retry)`, '#00e5a0');
+      } else { throw e2; }
+    }
   } catch(e) {
     console.error('CSV Save Error:', e);
     updateGhStatus(`✗ CSV: ${e.message}`, '#ff3d6b');
@@ -6738,16 +6695,20 @@ function updateSentimentDash() {
 }
 
 function sendNotification(msg, title, type) {
+  // Handle both sendNotification(msg) and sendNotification(msg, title, type)
+  const _msg   = msg   || '';
+  const _title = title || _msg.slice(0, 30);
+  const _type  = type  || 'auto';
   // WhatsApp broadcast
   try {
     const contacts = JSON.parse(localStorage.getItem('wa_contacts') || '[]');
     contacts.forEach(c => {
-      const tog = document.getElementById('tog_' + type);
+      const tog = document.getElementById('tog_' + _type);
       if (!tog?.classList.contains('on')) return;
-      const num = c.number?.replace(/\D/g,'');
-      if (!num) return;
-      const text = encodeURIComponent(title + ' - ' + msg + ' - OCA');
-      window.open('https://wa.me/' + num + '?text=' + text, '_blank');
+      const rawNum = (c.number || '').replace(/[^0-9]/g, '');
+      if (!rawNum) return;
+      const text = encodeURIComponent(_title + ' - ' + _msg + ' - OCA');
+      window.open('https://wa.me/' + rawNum + '?text=' + text, '_blank');
     });
   } catch(e) {}
   // Log to activity
