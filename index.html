@@ -755,6 +755,42 @@ body.chart-fs-active #candleSection {
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 12px; margin-bottom: 14px; overflow: hidden;
 }
+
+/* Drawing Tools */
+.chart-draw-toolbar {
+  display: flex; align-items: center; gap: 2px;
+  padding: 4px 8px; background: var(--panel3);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.draw-tool-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 5px;
+  background: var(--panel2); border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer;
+  font-family: var(--font-mono); font-size: 10px;
+  transition: all .15s; white-space: nowrap;
+}
+.draw-tool-btn:hover { border-color: var(--accent); color: var(--accent); }
+.draw-tool-btn.active { background: rgba(0,201,255,.15); border-color: var(--accent); color: var(--accent); }
+.draw-tool-btn .tool-icon { font-size: 13px; }
+.cursor-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer;
+  font-family: var(--font-mono); font-size: 12px; color: #d1d4dc;
+  transition: background .12s;
+}
+.cursor-menu-item:hover { background: rgba(255,255,255,.06); }
+.cursor-menu-item.active { color: var(--accent); }
+.cmenu-icon { font-size: 15px; width: 20px; text-align: center; }
+.cmenu-shortcut { margin-left: auto; font-size: 10px; color: var(--muted2); }
+#drawingCanvas {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 10;
+}
+#drawingCanvas.draw-active { pointer-events: all; cursor: crosshair; }
+#drawingCanvas.draw-eraser { cursor: cell; }
+#drawingCanvas.draw-arrow  { cursor: default; }
 .candle-select-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px 18px; background: var(--panel2); border-bottom: 1px solid var(--border); }
 /* TF buttons */
 .tf-btn { background:var(--panel3);border:1px solid var(--border2);color:var(--muted);padding:4px 9px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.3px;transition:all .15s; }
@@ -1646,6 +1682,32 @@ tr.atm-row td.strike-cell { color:var(--accent); }
     </div>
 </div>
 
+<!-- ══ CE/PE RATIO TURNING POINT PANEL ══ -->
+<div id="cePeRatioPanel" style="margin:10px 16px;background:linear-gradient(135deg,#0d1f2e 0%,#070b12 100%);border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:none;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <div>
+      <div style="font-family:var(--font-disp);font-size:16px;letter-spacing:2px;color:var(--accent);">⚖ CE/PE RATIO — TURNING POINT DETECTOR</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:.5px;">
+        PE heavy (ratio&lt;0.87) = 🟢 BOTTOM near → BUY CE &nbsp;|&nbsp; CE heavy (ratio&gt;1.15) = 🔴 TOP near → EXIT CE / BUY PE &nbsp;|&nbsp; Balanced (0.95-1.05) = ↔ SIDEWAYS
+      </div>
+    </div>
+    <div id="cePeRatioSignal" style="font-family:var(--font-mono);font-size:11px;font-weight:bold;padding:4px 12px;border-radius:12px;background:rgba(0,201,255,.1);border:1px solid rgba(0,201,255,.3);color:var(--accent);white-space:nowrap;">LOADING</div>
+  </div>
+  <!-- Ratio bar visual -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <span style="font-family:var(--font-mono);font-size:10px;color:var(--red);width:60px;text-align:right;">CE ₹<span id="ceLtpDisp">—</span></span>
+    <div style="flex:1;height:20px;background:var(--panel3);border-radius:10px;overflow:hidden;position:relative;">
+      <div id="ceBar" style="position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#00e5a0,#00c896);border-radius:10px;transition:width 0.5s;"></div>
+      <div id="peBar" style="position:absolute;right:0;top:0;height:100%;background:linear-gradient(270deg,#ff3d6b,#ff6b8a);border-radius:10px;transition:width 0.5s;"></div>
+      <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.2);"></div>
+    </div>
+    <span style="font-family:var(--font-mono);font-size:10px;color:var(--green);width:60px;">PE ₹<span id="peLtpDisp">—</span></span>
+  </div>
+  <div id="cePeRatioDetail" style="font-family:var(--font-mono);font-size:11px;color:var(--muted);line-height:1.8;"></div>
+  <!-- Bottom/Top signal history -->
+  <div id="cePeHistory" style="margin-top:8px;max-height:80px;overflow-y:auto;font-family:var(--font-mono);font-size:10px;color:var(--muted);"></div>
+</div>
+
 
 <!-- ══ BUYER vs SELLER ADVISOR ══════════════════════════ -->
 <div id="bsAdvisorWrap" style="margin:10px 16px;border-radius:12px;overflow:hidden;border:1px solid var(--border);display:none;">
@@ -2207,8 +2269,8 @@ tr.atm-row td.strike-cell { color:var(--accent); }
       <button onclick="openIndicatorPanel()" style="background:var(--panel3);border:1px solid var(--border2);color:var(--accent);padding:4px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">＋ INDICATOR</button>
 
       <!-- Scroll + reset -->
-      <button onclick="scrollEmaChart(-0.3)" style="background:var(--panel3);border:1px solid var(--border2);color:var(--text);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;">◀</button>
-      <button onclick="scrollEmaChart(0.3)"  style="background:var(--panel3);border:1px solid var(--border2);color:var(--text);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;">▶</button>
+      <button onclick="scrollEmaChart(-0.3)" title="Older candles (past)" style="background:var(--panel3);border:1px solid var(--border2);color:var(--text);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;">◀</button>
+      <button onclick="scrollEmaChart(0.3)"  title="Newer candles (present)" style="background:var(--panel3);border:1px solid var(--border2);color:var(--text);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;">▶</button>
       <button onclick="resetEmaChart()" style="background:var(--panel3);border:1px solid var(--border2);color:var(--muted);padding:4px 8px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;">RESET</button>
       <button id="fullscreenBtn" onclick="toggleChartFullscreen()" title="Fullscreen">⛶</button>
     </div>
@@ -2222,6 +2284,13 @@ tr.atm-row td.strike-cell { color:var(--accent); }
         <span id="stratName_strat_ema" style="color:var(--text);font-size:10px;">EMA Cross</span>
         <span id="stratCount_strat_ema" style="color:var(--muted);font-size:10px;"></span>
       </div>
+      <!-- CSV Strategy Card -->
+      <div id="stratCard_strat_csv" onclick="toggleStrategyVisible('strat_csv')" style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;cursor:pointer;border:1px solid rgba(0,201,255,.4);background:rgba(0,201,255,.08);transition:all .15s;">
+        <button id="stratEye_strat_csv" onclick="event.stopPropagation();toggleStrategyVisible('strat_csv')" style="background:none;border:none;cursor:pointer;padding:0;font-size:12px;">👁</button>
+        <span style="color:#00c9ff;font-size:10px;letter-spacing:.3px;">◆</span>
+        <span id="stratName_strat_csv" style="color:var(--text);font-size:10px;">CSV Strategy</span>
+        <span style="font-size:9px;color:var(--muted);padding:1px 4px;border-radius:3px;background:rgba(0,201,255,.12);">8-day</span>
+      </div>
 
       <div style="flex:1"></div>
       <!-- Signal type legend -->
@@ -2231,7 +2300,6 @@ tr.atm-row td.strike-cell { color:var(--accent); }
         <span style="color:#ff3d6b;">▼ BUY PE</span>
         <span style="color:#ff6b00;">◆ SELL CE</span>
         <span style="color:#7c3aed;">◆ SELL PE</span>
-
       </div>
     </div>
     <!-- Active strategy result panel (below legend) -->
@@ -2241,11 +2309,97 @@ tr.atm-row td.strike-cell { color:var(--accent); }
     <div id="emaSignalBox" style="padding:3px 12px;font-family:var(--font-mono);font-size:11px;letter-spacing:.3px;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);min-height:18px;"></div>
 
     <!-- OHLC tooltip bar -->
-    <div id="ohlcBar" style="padding:3px 12px;font-family:var(--font-mono);font-size:11px;color:var(--muted);background:transparent;min-height:16px;display:flex;gap:12px;"></div>
+    <div id="ohlcBar" style="padding:5px 12px;font-family:var(--font-mono);font-size:12px;font-weight:bold;color:#fff;background:rgba(0,0,0,.5);min-height:20px;display:flex;gap:16px;border-radius:4px;"></div>
 
     <!-- Main chart canvas -->
     <div id="emaChartWrap" style="position:relative;padding:0 8px 8px;touch-action:none;user-select:none;-webkit-user-select:none;">
-      <canvas id="candleCanvas" style="display:block;width:100%;height:360px;touch-action:none;"></canvas>
+      <div style="position:absolute;top:8px;right:16px;z-index:100;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <!-- Strategy toggles -->
+        <div style="display:flex;gap:4px;align-items:center;">
+          <span style="font-family:var(--font-mono);font-size:10px;color:#aaa;font-weight:bold;">STRATEGY:</span>
+          <button id="stratEmaToggle" onclick="toggleStrategy('ema')" title="Toggle EMA Signals" style="background:rgba(0,229,160,.2);border:1px solid rgba(0,229,160,.5);color:#00ff88;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:bold;">👁 EMA</button>
+          <button id="stratCsvToggle" onclick="toggleStrategy('csv')" title="Toggle CSV Signals" style="background:rgba(255,159,64,.2);border:1px solid rgba(255,159,64,.5);color:#ffaa00;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:bold;">👁 CSV</button>
+        </div>
+        <div style="width:1px;height:18px;background:var(--border);"></div>
+        <button onclick="resetChartView()" style="background:rgba(0,201,255,.2);border:1px solid rgba(0,201,255,.5);color:#00c9ff;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:bold;white-space:nowrap;z-index:101;">⟲ RESET</button>
+      </div>
+      <!-- Legend -->
+      <div id="chartLegend" style="position:absolute;top:8px;left:16px;z-index:100;display:flex;gap:12px;font-family:var(--font-mono);font-size:11px;font-weight:bold;">
+        <span id="legendBuyCE" style="display:none;color:#00ff88;text-shadow:0 0 4px #00ff88;">▲ BUY CE</span>
+        <span id="legendBuyPE" style="display:none;color:#ff4466;text-shadow:0 0 4px #ff4466;">▼ BUY PE</span>
+        <span id="legendSellCE" style="display:none;color:#ffaa00;text-shadow:0 0 4px #ffaa00;">▼ SELL CE</span>
+        <span id="legendSellPE" style="display:none;color:#00ddff;text-shadow:0 0 4px #00ddff;">▲ SELL PE</span>
+      </div>
+      <!-- Cursor mode toggle -->
+      <div style="position:absolute;top:8px;left:200px;z-index:100;display:flex;gap:4px;">
+        <button id="cursorCrossBtn" onclick="setChartCursor('cross')" title="Crosshair Mode" style="background:rgba(0,201,255,.2);border:1px solid rgba(0,201,255,.5);color:#00c9ff;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:bold;">✛ CROSS</button>
+        <button id="cursorDragBtn" onclick="setChartCursor('drag')" title="Drag Mode" style="background:rgba(128,128,128,.2);border:1px solid rgba(128,128,128,.4);color:#aaa;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:bold;">✋ DRAG</button>
+      </div>
+      <canvas id="candleCanvas" style="display:block;width:100%;height:360px;touch-action:none;cursor:crosshair;"></canvas>
+      <canvas id="drawingCanvas" width="100%" height="360" style="position:absolute;top:0;left:8px;right:8px;height:360px;pointer-events:none;"></canvas>
+      <div id="chartPanHint" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,201,255,.2);border:1px solid rgba(0,201,255,.5);padding:6px 14px;border-radius:12px;font-family:var(--font-mono);font-size:12px;font-weight:bold;color:#00c9ff;pointer-events:none;z-index:50;animation:pulse 2s infinite;">← DRAG / PINCH TO PAN →</div>
+    </div>
+
+    <!-- Drawing Tools Bar — TradingView style -->
+    <div class="chart-draw-toolbar" id="drawToolbar" style="position:relative;">
+      <!-- Cursor selector (main visible button like TV) -->
+      <div style="position:relative;">
+        <button id="cursorModeBtn" onclick="toggleCursorMenu()" 
+          style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;
+          background:var(--panel2);border:1px solid var(--border);color:var(--text);
+          cursor:pointer;font-family:var(--font-mono);font-size:10px;min-width:90px;">
+          <span id="cursorIcon">✛</span>
+          <span id="cursorLabel">Cross</span>
+          <span style="color:var(--muted);font-size:9px;margin-left:2px;">▼</span>
+        </button>
+        <!-- Dropdown menu — matches screenshot exactly -->
+        <div id="cursorMenu" style="display:none;position:absolute;top:100%;left:0;z-index:999;
+          background:#1e222d;border:1px solid var(--border);border-radius:6px;
+          min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,.8);padding:4px 0;margin-top:4px;">
+          <div onclick="selectCursor('cross','✛','Cross')" 
+            class="cursor-menu-item active" id="cmenu_cross">
+            <span class="cmenu-icon">✛</span> Cross
+            <span class="cmenu-shortcut">Default</span>
+          </div>
+          <div onclick="selectCursor('dot','•','Dot')"
+            class="cursor-menu-item" id="cmenu_dot">
+            <span class="cmenu-icon">•</span> Dot
+          </div>
+          <div onclick="selectCursor('arrow','↗','Arrow')"
+            class="cursor-menu-item" id="cmenu_arrow">
+            <span class="cmenu-icon" style="font-size:14px;">↗</span> Arrow
+          </div>
+          <div onclick="selectCursor('demo','▷','Demonstration')"
+            class="cursor-menu-item" id="cmenu_demo">
+            <span class="cmenu-icon">▷</span> Demonstration
+          </div>
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:4px 0;">
+          <div onclick="selectCursor('eraser','⌫','Eraser')"
+            class="cursor-menu-item" id="cmenu_eraser">
+            <span class="cmenu-icon">⌫</span> Eraser
+          </div>
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:4px 0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;">
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">Values tooltip on long press</span>
+            <div id="tooltipToggle" onclick="toggleTooltipOnPress()" 
+              style="width:36px;height:20px;background:var(--accent);border-radius:10px;cursor:pointer;position:relative;transition:background .2s;">
+              <div style="position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:50%;background:#fff;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drawing tools -->
+      <button class="draw-tool-btn" id="tool_hline" onclick="setDrawTool('hline');closeCursorMenu();">
+        <span class="tool-icon">─</span> H-Line
+      </button>
+      <button class="draw-tool-btn" id="tool_tline" onclick="setDrawTool('tline');closeCursorMenu();">
+        <span class="tool-icon">╱</span> Trend
+      </button>
+      <div style="flex:1"></div>
+      <button onclick="resetChartView()" style="background:rgba(0,201,255,.1);border:1px solid rgba(0,201,255,.3);color:var(--accent);padding:4px 8px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:9px;white-space:nowrap;">⟲ RESET</button>
+      <button onclick="clearAllDrawings()" style="background:rgba(255,61,107,.1);border:1px solid rgba(255,61,107,.3);color:var(--red);padding:4px 8px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:9px;white-space:nowrap;">✕ CLR</button>
+      <span id="drawTooltip" style="font-family:var(--font-mono);font-size:9px;color:var(--muted);padding-left:4px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
     </div>
 
     <!-- Backtest panel (below chart) -->
@@ -2263,7 +2417,7 @@ tr.atm-row td.strike-cell { color:var(--accent); }
         <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:7px 12px;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);">
           <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">Chart:</span>
           <span id="btDataInfo" style="font-family:var(--font-mono);font-size:11px;color:var(--accent);">0 bars</span>
-          <span id="btDataWarn" style="font-family:var(--font-mono);font-size:11px;color:#ff3d6b;display:none;"></span>
+          <span id="btApiWarn" style="font-family:var(--font-mono);font-size:11px;color:#ff3d6b;display:none;"></span>
           <button onclick="loadOneYearData()" style="background:rgba(0,201,255,.15);border:1px solid var(--accent);color:var(--accent);padding:3px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;font-weight:bold;">📥 1Y DAILY</button>
           <div style="width:1px;height:16px;background:var(--border);"></div>
 
@@ -2519,7 +2673,7 @@ tr.atm-row td.strike-cell { color:var(--accent); }
           <div>
             <div class="filter-lbl" style="margin-bottom:5px;">Chat ID / Channel</div>
             <div style="display:flex;gap:6px;">
-              <input type="text" class="ctrl-select" id="tgChat" placeholder="@channel or -100xxxxxx" style="flex:1;font-size:12px;" oninput="saveTgConfig()">
+              <input type="text" class="ctrl-select" id="tgChatId" placeholder="@channel or -100xxxxxx" style="flex:1;font-size:12px;" oninput="saveTgConfig()">
               <button class="btn btn-primary btn-sm" onclick="sendTgTest()">TEST</button>
             </div>
           </div>
@@ -3511,8 +3665,82 @@ function renderChart(data, type = 'oi') {
       '<span style="color:var(--muted);font-family:var(--font-mono);font-size:10px;">⚠ ' + yLabel + ' data available nahi — API se nahi aaya</span>';
   }
 
-  // Build signal annotations
+  // Build signal annotations — Support/Resistance/MaxPain/TP/SL
   const signalAnnotations = {};
+  
+  // ── Support, Resistance, MaxPain from live chain data ──
+  if (chainData && chainData.length) {
+    const liveSpot2 = chainData[0]?.underlying_spot_price || 0;
+    const maxPainLevel = calcMaxPain(chainData, liveSpot2);
+    let maxCOI=0, maxPOI=0, resStrike=0, supStrike=0;
+    chainData.forEach(d => {
+      const ceOI = d.call_options?.market_data?.oi || 0;
+      const peOI = d.put_options?.market_data?.oi  || 0;
+      if (Math.abs(d.strike_price - liveSpot2) <= 2000) {
+        if (ceOI > maxCOI) { maxCOI = ceOI; resStrike = d.strike_price; }
+        if (peOI > maxPOI) { maxPOI = peOI; supStrike = d.strike_price; }
+      }
+    });
+    if (resStrike) signalAnnotations['resist_line'] = {
+      type:'line', scaleID:'y', value:resStrike,
+      borderColor:'rgba(255,61,107,.7)', borderWidth:1.5, borderDash:[6,3],
+      label:{ content:'R: '+resStrike, enabled:true, position:'start',
+        color:'#ff3d6b', backgroundColor:'rgba(255,61,107,.15)',
+        font:{family:'Space Mono',size:9} }
+    };
+    if (supStrike) signalAnnotations['support_line'] = {
+      type:'line', scaleID:'y', value:supStrike,
+      borderColor:'rgba(0,229,160,.7)', borderWidth:1.5, borderDash:[6,3],
+      label:{ content:'S: '+supStrike, enabled:true, position:'start',
+        color:'#00e5a0', backgroundColor:'rgba(0,229,160,.15)',
+        font:{family:'Space Mono',size:9} }
+    };
+    if (maxPainLevel) signalAnnotations['maxpain_line'] = {
+      type:'line', scaleID:'y', value:maxPainLevel,
+      borderColor:'rgba(255,208,0,.8)', borderWidth:2, borderDash:[8,4],
+      label:{ content:'MaxPain: '+maxPainLevel, enabled:true, position:'end',
+        color:'#ffd000', backgroundColor:'rgba(255,208,0,.15)',
+        font:{family:'Space Mono',size:9,weight:'bold'} }
+    };
+    // ── TP1, TP2, SL based on last signal ──
+    const lastCESig = (() => {
+      const allSigs = chartDataCache?._lastCsvBuyCE;
+      return allSigs?.length ? allSigs[allSigs.length-1] : null;
+    })();
+    if (liveSpot2 > 0) {
+      const atmRow3 = chainData.find(d => {
+        const step3 = INSTRUMENTS[document.getElementById('symbolSel')?.value]?.step || 50;
+        return d.strike_price === Math.round(liveSpot2/step3)*step3;
+      });
+      const atmLTP = atmRow3?.call_options?.market_data?.ltp || 0;
+      if (atmLTP > 0) {
+        // CE buy trade levels
+        const sl_price  = liveSpot2 - atmLTP * 0.6;   // SL: spot - 60% of premium
+        const tp1_price = liveSpot2 + atmLTP * 1.2;   // TP1: +120% premium worth
+        const tp2_price = liveSpot2 + atmLTP * 2.5;   // TP2: +250% premium worth
+        signalAnnotations['sl_line'] = {
+          type:'line', scaleID:'y', value:sl_price,
+          borderColor:'rgba(255,30,60,.6)', borderWidth:1.5, borderDash:[4,4],
+          label:{ content:'SL: '+sl_price.toFixed(0), enabled:true, position:'end',
+            color:'#ff1a4a', backgroundColor:'rgba(255,30,60,.12)', font:{family:'Space Mono',size:8} }
+        };
+        signalAnnotations['tp1_line'] = {
+          type:'line', scaleID:'y', value:tp1_price,
+          borderColor:'rgba(0,229,160,.5)', borderWidth:1.5, borderDash:[4,4],
+          label:{ content:'TP1: '+tp1_price.toFixed(0), enabled:true, position:'end',
+            color:'#00e5a0', backgroundColor:'rgba(0,229,160,.12)', font:{family:'Space Mono',size:8} }
+        };
+        signalAnnotations['tp2_line'] = {
+          type:'line', scaleID:'y', value:tp2_price,
+          borderColor:'rgba(0,229,160,.8)', borderWidth:2, borderDash:[4,2],
+          label:{ content:'TP2: '+tp2_price.toFixed(0), enabled:true, position:'end',
+            color:'#00ff88', backgroundColor:'rgba(0,229,160,.18)', font:{family:'Space Mono',size:8,weight:'bold'} }
+        };
+      }
+    }
+  }
+  
+  // Build signal annotations (OI chart signals)
   data.signals.forEach((sig, i) => {
     if (!sig) return;
     signalAnnotations['sig_' + i] = {
@@ -3627,7 +3855,7 @@ function renderChart(data, type = 'oi') {
             }
           }
         },
-        annotation: { annotations: signalAnnotations }
+        annotation: { annotations: {...signalAnnotations} }
       },
       scales: {
         x: {
@@ -4042,9 +4270,11 @@ function runMarketIntelligence() {
   // ════════════════════════════════
   // GRID 3: GREEKS
   // ════════════════════════════════
-  const ivEnv = atmCEiv > 25 ? '⚠ HIGH IV — Options mehenga, selling better' :
-                atmCEiv > 15 ? 'Normal IV zone' :
-                atmCEiv > 0  ? '✅ LOW IV — Options sasta, buying ok' : 'Loading...';
+  // 6-day CSV data thresholds (650 rows analyzed)
+  const ivEnv = atmCEiv > 35 ? `🔴 IV ${atmCEiv.toFixed(0)}%>35 — STRONG SELLER (64% win)` :
+                atmCEiv > 25 ? `🔴 IV ${atmCEiv.toFixed(0)}%>25 — SELLER DAY. Buyers 36-40% only.` :
+                atmCEiv > 15 ? `⚠️ IV ${atmCEiv.toFixed(0)}% RISKY ZONE (15-25%). 53% win.` :
+                atmCEiv > 0  ? `✅ IV ${atmCEiv.toFixed(0)}%<15 — BUY ZONE (83% win, 6-day data)` : 'Loading...';
   const gammaRisk = atmCEgamma > 0.003 ? '⚠ HIGH GAMMA — Big moves possible' : 'Normal gamma risk';
   const thetaBurn = atmCEtheta ? Math.abs(atmCEtheta).toFixed(1) + '/day' : '—';
 
@@ -4125,7 +4355,8 @@ function runMarketIntelligence() {
   // IV >25% = seller day — NEVER buy options (2-Apr: +1418 pts, CE -274, PE -264!)
   // IV 18-25% = risky zone
   // IV <18% = buyer safe zone
-  const ivGate = atmCEiv > 25 ? 'seller' : atmCEiv > 18 ? 'risky' : 'safe';
+  // 6-day data gates
+  const ivGate = atmCEiv > 35 ? 'strong_seller' : atmCEiv > 25 ? 'seller' : atmCEiv > 15 ? 'risky' : 'safe';
   const dteGate = dte === 0 ? 'expiry' : dte === 1 ? 'nearExpiry' : 'normal';
 
   // PCR momentum check (2-Apr insight: PCR >1.2 = strong bull spot move)
@@ -4144,42 +4375,81 @@ function runMarketIntelligence() {
   const spotMomo    = spot - spotPrev10; // pts in last ~4 min
 
   const verdict = (() => {
-    // Expiry day — no option buy, show spot direction only
+    // Get ATM prices locally to avoid scope issues
+    const atmCEdata = chainData.find(d => d.strike_price === atm)?.call_options?.market_data || {};
+    const atmPEdata = chainData.find(d => d.strike_price === atm)?.put_options?.market_data || {};
+    const cePrice = atmCEdata.ltp || 0;
+    const pePrice = atmPEdata.ltp || 0;
+    
+    // Expiry day — SELL strategies only
     if (dteGate === 'expiry') {
-      if (score >= 2) return { label:'BULLISH SPOT 🚀 (Expiry — Options mat kharido)', color:'var(--green)', bg:'rgba(0,229,160,.08)', border:'rgba(0,229,160,.3)',
-        action:`⚡ EXPIRY DAY: Spot upar ja sakta hai lekin CE/PE mat kharido — Theta -${Math.abs(atmCEtheta).toFixed(0)}/day. PCR=${livePCR.toFixed(2)} bullish hai.` };
-      if (score <= -2) return { label:'BEARISH SPOT 📉 (Expiry — Options mat kharido)', color:'var(--red)', bg:'rgba(255,61,107,.08)', border:'rgba(255,61,107,.3)',
-        action:`⚡ EXPIRY DAY: Spot neeche ja sakta hai lekin PE mat kharido — Theta kha jayega.` };
-      return { label:'EXPIRY — WAIT ⏳', color:'var(--yellow)', bg:'rgba(255,208,0,.06)', border:'rgba(255,208,0,.2)',
-        action:`⚡ Expiry pe options buying BAND. Spot direction unclear. Wait karo.` };
+      if (score >= 2) return { label:'BULLISH -- SELL PE', color:'#00ff88', bg:'rgba(0,255,136,.15)', border:'rgba(0,255,136,.5)',
+        action:'EXPIRY DAY: Spot upar ja sakta hai (PCR ' + livePCR.toFixed(2) + '). SELL PE @ ' + atm + ' PE Rs.' + pePrice.toFixed(1) + ' -- Theta aapka friend! CE mat karo. SL: +50%, Target: -30%.' };
+      if (score <= -2) return { label:'BEARISH -- SELL CE', color:'#ff4466', bg:'rgba(255,68,102,.15)', border:'rgba(255,68,102,.5)',
+        action:'EXPIRY DAY: Spot neeche ja sakta hai. SELL CE @ ' + atm + ' CE Rs.' + cePrice.toFixed(1) + ' -- Theta aapka friend! PE mat karo. SL: +50%, Target: -30%.' };
+      return { label:'EXPIRY -- SELL STRADDLE', color:'#ffcc00', bg:'rgba(255,204,0,.15)', border:'rgba(255,204,0,.5)',
+        action:'EXPIRY DAY: Direction unclear. SHORT STRADDLE -- SELL CE Rs.' + cePrice.toFixed(1) + ' + SELL PE Rs.' + pePrice.toFixed(1) + ' @ ' + atm + '. Theta se dono taraf profit.' };
     }
-    // Seller day (IV >25%) — no buying
+    // Strong seller (IV>35%)
+    if (ivGate === 'strong_seller') {
+      const spok = score >= 1 && livePCR > 1.1;
+      const scok = score <= -1;
+      if (spok) return { label:'💰 SELL PE (STRONG SELLER)', color:'#ff9f40', bg:'rgba(255,159,64,.10)', border:'rgba(255,159,64,.5)',
+        action:`💰 IV ${atmCEiv.toFixed(0)}%>35 + BULL + PCR ${livePCR.toFixed(2)}>1.1 → SELL PE. 6-day: 74% win. ATM PE sell. Stop: 50% premium up.` };
+      if (scok) return { label:'💰 SELL CE (STRONG SELLER)', color:'#ff9f40', bg:'rgba(255,159,64,.10)', border:'rgba(255,159,64,.5)',
+        action:`💰 IV ${atmCEiv.toFixed(0)}%>35 + BEAR → SELL CE. 6-day: 64% win. ATM CE sell. Stop: 50% premium up.` };
+      return { label:'🔴 STRONG SELLER — WAIT', color:'var(--red)', bg:'rgba(255,61,107,.08)', border:'rgba(255,61,107,.3)',
+        action:`🔴 IV ${atmCEiv.toFixed(0)}%>35. Mixed signals. WAIT — koi trade nahi.` };
+    }
+    // Seller day (IV>25%)
     if (ivGate === 'seller') {
-      if (score >= 2) return { label:'BULLISH — SELLER DAY ⚠️', color:'#ff9f40', bg:'rgba(255,159,64,.06)', border:'rgba(255,159,64,.3)',
-        action:`⚠️ Spot bullish hai lekin IV ${atmCEiv.toFixed(0)}%>25% — Buying mat karo. Sellers dominant hain. IV <18% hone ka wait karo.` };
-      if (score <= -2) return { label:'BEARISH — SELLER DAY ⚠️', color:'#ff9f40', bg:'rgba(255,159,64,.06)', border:'rgba(255,159,64,.3)',
-        action:`⚠️ Spot bearish hai lekin IV ${atmCEiv.toFixed(0)}%>25% — PE buying mat karo. Wait for IV <18%.` };
-      return { label:'SELLER DAY — WAIT 🔴', color:'var(--red)', bg:'rgba(255,61,107,.05)', border:'rgba(255,61,107,.2)',
-        action:`🔴 IV ${atmCEiv.toFixed(0)}% bahut zyada — Koi option buying nahi. Sellers kamate hain aaj.` };
+      const spok = score >= 2 && livePCR > 1.2;
+      const spok2= score >= 1 && livePCR > 1.1;
+      const scok = score <= -2;
+      const scok2= score <= -1 && livePCR < 0.9;
+      if (spok || spok2) return { label:'💰 SELL PE (SELLER DAY)', color:'#ff9f40', bg:'rgba(255,159,64,.08)', border:'rgba(255,159,64,.4)',
+        action:`💰 IV ${atmCEiv.toFixed(0)}%>25 + EMA BULL + PCR ${livePCR.toFixed(2)}>1.1 → SELL PE. 6-day: ${spok?'71%':'70%'} win. Stop: 50% premium increase.` };
+      if (scok || scok2) return { label:'💰 SELL CE (SELLER DAY)', color:'#ff9f40', bg:'rgba(255,159,64,.08)', border:'rgba(255,159,64,.4)',
+        action:`💰 IV ${atmCEiv.toFixed(0)}%>25 + EMA BEAR + PCR ${livePCR.toFixed(2)}<0.9 → SELL CE. 6-day: ${scok2?'62%':'61%'} win. Stop: 50% premium increase.` };
+      return { label:'🔴 SELLER DAY — WAIT', color:'var(--red)', bg:'rgba(255,61,107,.05)', border:'rgba(255,61,107,.2)',
+        action:`🔴 IV ${atmCEiv.toFixed(0)}%>25. Mixed signals. Buyers 36-40%. WAIT.` };
     }
     // Risky zone (IV 18-25%)
     if (ivGate === 'risky') {
-      if (score >= 3) return { label:'STRONGLY BULLISH ⚠️ (IV Risky)', color:'#ffd000', bg:'rgba(255,208,0,.06)', border:'rgba(255,208,0,.3)',
-        action:`⚠️ Bullish signal strong hai lekin IV ${atmCEiv.toFixed(0)}% risky zone mein hai. Chhoti position lo ya wait karo IV <18%.` };
-      if (score <= -3) return { label:'STRONGLY BEARISH ⚠️ (IV Risky)', color:'#ffd000', bg:'rgba(255,208,0,.06)', border:'rgba(255,208,0,.3)',
-        action:`⚠️ Bearish signal strong hai lekin IV ${atmCEiv.toFixed(0)}% risky — Chhoti position ya wait karo.` };
+      // 7-day data refinements for risky zone (IV 15-25%)
+      const emaFlips = window._emaFlipCount || 0;
+      const choppyNow = emaFlips >= 8;
+      
+      // Choppy day: EMA flip > 8 times = no trade
+      if (choppyNow) return { label:'↔ CHOPPY DAY — NO TRADE', color:'var(--yellow)', bg:'rgba(255,208,0,.08)', border:'rgba(255,208,0,.3)',
+        action:`↔ EMA ${emaFlips}x flip hua aaj — choppy market. IV ${atmCEiv.toFixed(0)}% risky zone mein bhi hai. 7-din: no trade best. Wait karo.` };
+      
+      // EMA BULL + PCR>1.15 = 61% CE win (7-day data)
+      if (score >= 2 && livePCR > 1.15) return { label:'🟡 CE BUY — RISKY (61%)', color:'#ffd000', bg:'rgba(255,208,0,.10)', border:'rgba(255,208,0,.4)',
+        action:`🟡 EMA BULL + PCR ${livePCR.toFixed(2)}>1.15. 7-din: 61% CE win avg +1.2. IV ${atmCEiv.toFixed(0)}% risky. Chhoti position: ${fmtN(atm)} CE. Stop: 40%.` };
+      
+      // EMA BULL + PCR>1.1 = 60% CE win
+      if (score >= 1 && livePCR > 1.1) return { label:'🟡 CE POSSIBLE — RISKY (60%)', color:'#ffd000', bg:'rgba(255,208,0,.08)', border:'rgba(255,208,0,.3)',
+        action:`🟡 EMA BULL + PCR ${livePCR.toFixed(2)}>1.1. 7-din: 60% win. Half position only. IV ${atmCEiv.toFixed(0)}% risky. Stop: 35% loss.` };
+      
+      // EMA BEAR + PCR<0.85 = AVOID  
+      if (score <= -1 && livePCR < 0.85) return { label:'🔴 PE AVOID (38% win)', color:'var(--red)', bg:'rgba(255,61,107,.05)', border:'rgba(255,61,107,.2)',
+        action:`🔴 EMA BEAR + PCR ${livePCR.toFixed(2)}<0.85. 7-din: Sirf 38% PE win. IV ${atmCEiv.toFixed(0)}% bhi risky. AVOID — wait karo.` };
+
+      return { label:'⚠️ RISKY ZONE — WAIT', color:'var(--yellow)', bg:'rgba(255,208,0,.05)', border:'rgba(255,208,0,.2)',
+        action:`⚠️ IV ${atmCEiv.toFixed(0)}% 15-25%. PCR ${livePCR.toFixed(2)} mixed. 7-din: 53% = coin flip. Wait for IV<15% ya PCR>1.15+EMA BULL.` };
     }
     // Safe zone (IV <18%) — full signals
-    if (score >= 3) return { label:'STRONGLY BULLISH 📈', color:'var(--green)', bg:'rgba(0,229,160,.08)', border:'rgba(0,229,160,.3)',
-      action:`✅ CE buy karo — ${fmtN(atm+step)} CE ya ${fmtN(atm)} CE. IV ${atmCEiv.toFixed(0)}% safe zone. Stop loss: 40% premium loss pe.` };
-    if (score >= 1) return { label:'MILDLY BULLISH 📈', color:'var(--green)', bg:'rgba(0,229,160,.05)', border:'rgba(0,229,160,.2)',
-      action:`⚡ Mild bullish — ${fmtN(atm)} CE consider karo. IV ${atmCEiv.toFixed(0)}% ok. Confirmation ka wait karo.` };
-    if (score <= -3) return { label:'STRONGLY BEARISH 📉', color:'var(--red)', bg:'rgba(255,61,107,.08)', border:'rgba(255,61,107,.3)',
-      action:`✅ PE buy karo — ${fmtN(atm-step)} PE ya ${fmtN(atm)} PE. IV ${atmCEiv.toFixed(0)}% safe zone. Stop loss: 40% premium loss pe.` };
-    if (score <= -1) return { label:'MILDLY BEARISH 📉', color:'var(--red)', bg:'rgba(255,61,107,.05)', border:'rgba(255,61,107,.2)',
-      action:`⚡ Mild bearish — ${fmtN(atm)} PE consider karo. Confirmation ka wait karo.` };
-    return { label:'NEUTRAL / SIDEWAYS ↔', color:'var(--yellow)', bg:'rgba(255,208,0,.06)', border:'rgba(255,208,0,.2)',
-      action:`⚖️ Range-bound — Short straddle ${fmtN(atm)} ya wait for breakout.` };
+    if (score >= 3) return { label:'✅ BUY CE — STRONG', color:'var(--green)', bg:'rgba(0,229,160,.10)', border:'rgba(0,229,160,.4)',
+      action:`✅ BUY CE — IV ${atmCEiv.toFixed(0)}%<15 + EMA BULL + PCR ${livePCR.toFixed(2)}>1.0. 6-day: 83% win. ${fmtN(atm)} CE. Stop: 40% loss. Target: 2x.` };
+    if (score >= 1) return { label:'📈 BULLISH BIAS — CONFIRM', color:'var(--green)', bg:'rgba(0,229,160,.05)', border:'rgba(0,229,160,.2)',
+      action:`📈 Bullish lekin confirm karo. IV ${atmCEiv.toFixed(0)}%<15 ok. PCR ${livePCR.toFixed(2)} aur EMA dono align hone do.` };
+    if (score <= -3) return { label:'✅ BUY PE — STRONG', color:'var(--red)', bg:'rgba(255,61,107,.10)', border:'rgba(255,61,107,.4)',
+      action:`✅ BUY PE — IV ${atmCEiv.toFixed(0)}%<15 + EMA BEAR + PCR ${livePCR.toFixed(2)}<1.0. 6-day: 83% win. ${fmtN(atm)} PE. Stop: 40% loss. Target: 2x.` };
+    if (score <= -1) return { label:'📉 BEARISH BIAS — CONFIRM', color:'var(--red)', bg:'rgba(255,61,107,.05)', border:'rgba(255,61,107,.2)',
+      action:`📉 Bearish lekin confirm karo. IV ${atmCEiv.toFixed(0)}%<15 ok. PCR ${livePCR.toFixed(2)} aur EMA dono align hone do.` };
+    return { label:'↔ SIDEWAYS — WAIT', color:'var(--yellow)', bg:'rgba(255,208,0,.06)', border:'rgba(255,208,0,.2)',
+      action:`↔ Koi clear signal nahi. PCR ${livePCR.toFixed(2)} neutral. IV ${atmCEiv.toFixed(0)}%. Breakout ka wait karo.` };
   })();
 
   const factorsHtml = [
@@ -4188,6 +4458,8 @@ function runMarketIntelligence() {
     `EMA 6 Bias → ${emaBias==='BULLISH'?'✅ Bullish':emaBias==='BEARISH'?'❌ Bearish':'➡ Neutral'}`,
     rsiVal ? `RSI ${rsiVal.toFixed(0)} → ${rsiVal>60?'✅ Bullish zone':rsiVal<40?'❌ Bearish zone':'➡ Neutral'}` : 'RSI → Chart load karo',
     `IV Env → ${atmCEiv>25?'🔴 >25% SELLER DAY':atmCEiv>18?'⚠️ 18-25% Risky':'✅ <18% Buyer Safe'} (${atmCEiv.toFixed(0)}%)`,
+    `EMA Flips → ${(window._emaFlipCount||0)>=8?'↔ CHOPPY ('+(window._emaFlipCount||0)+'x flip) NO TRADE':'✅ Stable ('+(window._emaFlipCount||0)+'x flip)'}`,
+    (() => { const atmR2=chainData?.find(d=>d.strike_price===Math.round((chainData[0]?.underlying_spot_price||0)/((INSTRUMENTS[document.getElementById('symbolSel')?.value]?.step)||50))*((INSTRUMENTS[document.getElementById('symbolSel')?.value]?.step)||50)); const c2=atmR2?.call_options?.market_data?.ltp||0; const p2=atmR2?.put_options?.market_data?.ltp||0; const r2=c2>0&&p2>0?c2/p2:1; return r2>1.15?`🔴 CE/PE=${r2.toFixed(2)} CE HEAVY → TOP near. Exit CE, consider PE`:r2<0.87?`🟢 CE/PE=${r2.toFixed(2)} PE HEAVY → BOTTOM near. BUY CE opportunity!`:`↔ CE/PE=${r2.toFixed(2)} Balanced`; })(),
     spotMomo !== 0 ? `Spot Momo (4min) → ${spotMomo>200?'🚀 STRONG BULL +'+spotMomo.toFixed(0):spotMomo<-200?'📉 STRONG BEAR '+spotMomo.toFixed(0):spotMomo>0?'+'+spotMomo.toFixed(0):spotMomo.toFixed(0)} pts` : 'Spot Momo → Loading...',
   ].map(f => `<span style="display:inline-block;background:rgba(0,0,0,.2);border-radius:4px;padding:2px 8px;font-size:11px;margin:2px;font-family:var(--font-mono);">${f}</span>`).join('');
 
@@ -4567,6 +4839,9 @@ let emaAllCandles  = [];
 let emaViewOffset  = 0;
 let EMA_VIEW_BARS = 80;
 let currentTf      = '1minute';
+// Signal cache - computed ONCE, not per-render (prevents repaint on scroll)
+let _cachedSignals = null;  // { buyCE, buyPE, sellCE, sellPE, noTrade, crossCE, crossPE }
+let _signalCacheKey = '';   // symbol+tf+length key
 
 // ── Indicator registry ───────────────────────────────
 // Each indicator: { id, type, params:{period,src,color,...}, visible }
@@ -4585,9 +4860,91 @@ let activeStrategies = [
     colorLong:  '#00e5a0',
     colorShort: '#ff3d6b',
     visible: true,
-    signals: [],   // filled by runBacktest()
+    signals: [],
+  },
+  {
+    id: 'strat_csv',
+    name: 'CSV Strategy',
+    colorLong:  '#00c9ff',
+    colorShort: '#ff9f40',
+    visible: true,
+    signals: [],  // filled by calcCsvStrategySignals()
   },
 ];
+
+/* ══ 8-DAY CSV STRATEGY SIGNAL CALCULATOR ══════════
+   Rules from 867 rows of real data:
+   BUY CE:  IV<15 + EMA BULL + PCR>1.0   (83% win)
+            OR IV 18-25 + EMA BULL + PCR>1.15 (59% win)
+            OR CE/PE ratio < 0.87 (PE heavy = bottom)
+   BUY PE:  IV<15 + EMA BEAR + PCR<1.0   (83% win)
+            OR CE/PE ratio > 1.15 (CE heavy = top)
+   SELL PE: IV>25 + EMA BULL + PCR>1.1   (82% win)
+   SELL CE: IV>25 + EMA BEAR + PCR<0.9   (57% win)
+   NO TRADE: EMA flips > 8 (choppy), OR DTE=0
+══════════════════════════════════════════════════ */
+function calcCsvStrategySignals(candles, emaCloseFull, emaOpenFull, liveIV, livePCR, liveOI) {
+  const signals = { buyCE:[], buyPE:[], sellCE:[], sellPE:[], noTrade:[] };
+  const n = candles.length;
+  if (!emaCloseFull || !emaOpenFull || n < 4) return signals;
+
+  // Count recent EMA flips (last 20 bars) for choppy detection
+  let recentFlips = 0;
+  const checkFrom = Math.max(0, n - 20);
+  for (let i = checkFrom+1; i < n; i++) {
+    const prevBull = emaCloseFull[i-1] != null && emaOpenFull[i-1] != null && emaCloseFull[i-1] > emaOpenFull[i-1];
+    const currBull = emaCloseFull[i]   != null && emaOpenFull[i]   != null && emaCloseFull[i]   > emaOpenFull[i];
+    if (prevBull !== currBull) recentFlips++;
+  }
+  const isChoppy = recentFlips >= 5;  // 5+ flips in last 20 bars = choppy
+
+  for (let i = 3; i < n; i++) {
+    const ec = emaCloseFull[i], eo = emaOpenFull[i];
+    const ec1= emaCloseFull[i-1], eo1= emaOpenFull[i-1];
+    if (ec==null||eo==null||ec1==null||eo1==null) continue;
+
+    const bullCross = ec1 <= eo1 && ec > eo;
+    const bearCross = ec1 >= eo1 && ec < eo;
+    const emaBull   = ec > eo;
+    const emaBear   = ec < eo;
+
+    // Only generate signal on EMA cross event
+    if (!bullCross && !bearCross) continue;
+    if (isChoppy) { signals.noTrade.push(i); continue; }
+
+    const iv  = liveIV  || 20;
+    const pcr = livePCR || 1.0;
+    const cepe = liveOI ? (liveOI.atmCeLtp > 0 && liveOI.atmPeLtp > 0 ? liveOI.atmCeLtp / liveOI.atmPeLtp : 1) : 1;
+
+    // ── SELL signals (IV>25) — highest confidence ──
+    if (iv > 25) {
+      if (bullCross && pcr > 1.1) { signals.sellPE.push(i); continue; }  // 82% win
+      if (bearCross && pcr < 0.9) { signals.sellCE.push(i); continue; }  // 57% win
+      signals.noTrade.push(i); continue;  // IV>25 but no clear sell setup
+    }
+
+    // ── NO BUY zone ──
+    if (iv > 18 && iv <= 25) {
+      // Risky zone: only buy with strong confirmation
+      if (bullCross && pcr > 1.15 && cepe < 0.95) { signals.buyCE.push(i); continue; }  // 59% win
+      signals.noTrade.push(i); continue;
+    }
+    if (iv > 15 && iv <= 18) {
+      // VERY risky: CE 44% — no trade
+      signals.noTrade.push(i); continue;
+    }
+
+    // ── BUY zone (IV<15 = 83% win) ──
+    if (iv <= 15) {
+      if (bullCross && pcr > 1.0) { signals.buyCE.push(i); continue; }  // 83%
+      if (bearCross && pcr < 1.0) { signals.buyPE.push(i); continue; }  // 83%
+      // CE/PE ratio: bottom signal
+      if (bullCross && cepe < 0.87) { signals.buyCE.push(i); continue; }
+      signals.noTrade.push(i);
+    }
+  }
+  return signals;
+}
 
 // ── populateCandleStrikes (alias) ────────────────────
 function populateCandleStrikes() {
@@ -4860,7 +5217,7 @@ async function loadEmaChart() {
   const is5m  = tf === '5minute', is15m = tf === '15minute';
   const needsAgg = is5m || is15m;
   const aggMin   = is5m ? 5 : 15;
-  const effectiveDays = needsAgg ? Math.min(days, 10) : days;
+  const effectiveDays = needsAgg ? Math.min(days, 10) : tf === 'day' ? Math.max(days, 60) : tf === 'week' ? Math.max(days, 180) : days;
 
   // IST local date (India = UTC+5:30) — toISOString() UTC deta hai jo galat ho sakta hai
   function toISTDateStr(d) {
@@ -4885,6 +5242,7 @@ async function loadEmaChart() {
     let raw = histRes?.data?.candles?.length ? [...histRes.data.candles].reverse() : [];
 
     // Step 2: Intraday data (aaj ka live data) — always fetch for minute TFs
+    const isDayTf    = tf === 'day' || tf === 'week';
     const isMinuteTf = ['1minute','5minute','15minute','30minute'].includes(tf) || needsAgg;
     if (isMinuteTf) {
       try {
@@ -4951,9 +5309,11 @@ async function loadEmaChart() {
 
   emaAllCandles = candles;
   emaViewOffset = 0;
+  _cachedSignals = null;  // Clear signal cache on new data load
+  _signalCacheKey = '';
   if (subLabel) subLabel.textContent = `${label} · ${tf} · ${candles.length} bars`;
   const btInfo = document.getElementById('btDataInfo');
-  const btWarn = document.getElementById('btDataWarn');
+  const btWarn = document.getElementById('btApiWarn');
   if (btInfo) btInfo.textContent = `${candles.length} bars loaded (${tf})`;
   if (btWarn) {
     const isIntraday = ['1minute','5minute','15minute','30minute'].includes(tf);
@@ -4999,6 +5359,137 @@ const tvCrosshairPlugin = {
   }
 };
 
+// ── Strategy Toggle State ─────────────────────────────────
+window._stratState = { ema: true, csv: false };
+
+function toggleStrategy(type) {
+  window._stratState[type] = !window._stratState[type];
+  const btn = document.getElementById('strat' + type.toUpperCase() + 'Toggle');
+  if (btn) {
+    if (window._stratState[type]) {
+      btn.style.background = type === 'ema' ? 'rgba(0,229,160,.2)' : 'rgba(255,159,64,.2)';
+      btn.style.borderColor = type === 'ema' ? 'rgba(0,229,160,.5)' : 'rgba(255,159,64,.5)';
+      btn.style.color = type === 'ema' ? '#00e5a0' : '#ff9f40';
+    } else {
+      btn.style.background = 'rgba(128,128,128,.2)';
+      btn.style.borderColor = 'rgba(128,128,128,.4)';
+      btn.style.color = '#888';
+    }
+  }
+  // Re-render chart to update signals
+  if (typeof renderEmaChart === 'function') renderEmaChart();
+}
+
+// ── Chart Cursor Mode ─────────────────────────────────────
+window._chartCursorMode = 'cross';
+
+function setChartCursor(mode) {
+  window._chartCursorMode = mode;
+  const canvas = document.getElementById('candleCanvas');
+  const crossBtn = document.getElementById('cursorCrossBtn');
+  const dragBtn = document.getElementById('cursorDragBtn');
+  
+  if (mode === 'cross') {
+    if (canvas) canvas.style.cursor = 'crosshair';
+    if (crossBtn) { crossBtn.style.background='rgba(0,201,255,.2)'; crossBtn.style.borderColor='rgba(0,201,255,.5)'; crossBtn.style.color='#00c9ff'; }
+    if (dragBtn) { dragBtn.style.background='rgba(128,128,128,.2)'; dragBtn.style.borderColor='rgba(128,128,128,.4)'; dragBtn.style.color='#888'; }
+    if (window.candleChart && window.candleChart.options.plugins.zoom) {
+      window.candleChart.options.plugins.zoom.pan = { enabled: false };
+      window.candleChart.options.plugins.zoom.zoom = { wheel:{ enabled:true }, pinch:{ enabled:true }, mode:'x' };
+      window.candleChart.update();
+    }
+  } else {
+    if (canvas) canvas.style.cursor = 'grab';
+    if (dragBtn) { dragBtn.style.background='rgba(0,201,255,.2)'; dragBtn.style.borderColor='rgba(0,201,255,.5)'; dragBtn.style.color='#00c9ff'; }
+    if (crossBtn) { crossBtn.style.background='rgba(128,128,128,.2)'; crossBtn.style.borderColor='rgba(128,128,128,.4)'; crossBtn.style.color='#888'; }
+    if (window.candleChart && window.candleChart.options.plugins.zoom) {
+      window.candleChart.options.plugins.zoom.pan = { enabled: true, mode:'xy' };
+      window.candleChart.options.plugins.zoom.zoom = { wheel:{ enabled:true, speed:0.05 }, pinch:{ enabled:true }, mode:'xy' };
+      window.candleChart.update();
+    }
+  }
+}
+
+// ── TradingView Style Crosshair Plugin ─────────────────────
+const tradingViewCrosshairPlugin = {
+  id: 'tvCrosshair',
+  lastX: -1,
+  lastY: -1,
+  
+  afterDraw(chart) {
+    if (this.lastX < 0 || this.lastY < 0) return;
+    const { left, right, top, bottom } = chart.chartArea;
+    const { ctx } = chart;
+    
+    if (this.lastX < left || this.lastX > right || this.lastY < top || this.lastY > bottom) return;
+    
+    ctx.save();
+    
+    // Horizontal dotted line
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.moveTo(left, this.lastY);
+    ctx.lineTo(right, this.lastY);
+    ctx.stroke();
+    
+    // Vertical dotted line
+    ctx.beginPath();
+    ctx.moveTo(this.lastX, top);
+    ctx.lineTo(this.lastX, bottom);
+    ctx.stroke();
+    
+    ctx.setLineDash([]);
+    
+    // Dot at intersection
+    const yScale = chart.scales.y;
+    if (yScale) {
+      const priceAtCross = yScale.getValueForPixel(this.lastY);
+      const yPixel = yScale.getPixelForValue(priceAtCross);
+      ctx.beginPath();
+      ctx.arc(this.lastX, yPixel, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.strokeStyle = '#00c9ff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    
+    // Price label box
+    const xScale = chart.scales.x;
+    if (xScale && yScale) {
+      const priceVal = yScale.getValueForPixel(this.lastY);
+      const labelTxt = priceVal?.toFixed(1) || '';
+      ctx.font = '10px Space Mono';
+      const tw = ctx.measureText(labelTxt).width;
+      ctx.fillStyle = '#00c9ff';
+      ctx.fillRect(right + 2, this.lastY - 8, tw + 8, 16);
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'left';
+      ctx.fillText(labelTxt, right + 6, this.lastY + 4);
+    }
+    
+    ctx.restore();
+  }
+};
+
+// Track mouse position
+document.addEventListener('mousemove', (e) => {
+  const canvas = document.getElementById('candleCanvas');
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  tradingViewCrosshairPlugin.lastX = e.clientX - rect.left;
+  tradingViewCrosshairPlugin.lastY = e.clientY - rect.top;
+  if (window.candleChart) window.candleChart.update('none');
+});
+
+document.addEventListener('mouseleave', () => {
+  tradingViewCrosshairPlugin.lastX = -1;
+  tradingViewCrosshairPlugin.lastY = -1;
+  if (window.candleChart) window.candleChart.update('none');
+});
+
 // ── Custom Candle Drawing Plugin ─────────────────────
 // Chart.js bar chart ke upar canvas pe direct candles draw karta hai
 // Wick aur Body ek saath — bilkul broker app jaisa
@@ -5017,9 +5508,13 @@ const candleDrawPlugin = {
 
     // Calculate candle width from bar spacing
     const totalBars = view.length;
-    const chartW    = chart.chartArea.right - chart.chartArea.left;
-    const barW      = Math.max(2, (chartW / totalBars) * 0.7);  // 70% of slot width
-    const wickW     = Math.max(1, barW * 0.08);                 // wick = 8% of bar width
+    const rightPad  = 60; // Leave 60px for Y-axis price labels
+    const leftPad   = 5;   // Small left padding
+    const chartW    = chart.chartArea.right - chart.chartArea.left - rightPad - leftPad;
+    const maxX      = chart.chartArea.right - rightPad; // Max X for candle right edge
+    const minX      = chart.chartArea.left + leftPad;   // Min X for candle left edge
+    const barW      = Math.max(2, (chartW / totalBars) * 0.65); // 65% of slot width
+    const wickW     = Math.max(1, barW * 0.1); // wick = 10% of bar width
 
     ctx.save();
     view.forEach((c, i) => {
@@ -5030,6 +5525,9 @@ const candleDrawPlugin = {
       // Get pixel positions
       const xMid  = xScale.getPixelForValue(i);
       if (xMid === undefined) return;
+      
+      // Skip candles outside visible area
+      if (xMid < minX - barW || xMid > maxX + barW) return;
       const yHigh  = yScale.getPixelForValue(high);
       const yLow   = yScale.getPixelForValue(low);
       const yOpen  = yScale.getPixelForValue(open);
@@ -5050,7 +5548,200 @@ const candleDrawPlugin = {
       ctx.fillStyle = color;
       ctx.fillRect(xMid - barW / 2, bodyTop, barW, bodyH);
     });
+
+    // ── Draw Buy/Sell Signals (TradingView Style) ────────────
+    const stratState = window._stratState || { ema: true, csv: false };
+    const viewStart = window._emaViewOffset || 0;
+    
+    // Get signals from chart datasets
+    const chartData = chart.data.datasets || [];
+    let emaSignalsCE = null, emaSignalsPE = null;
+    
+    chartData.forEach(ds => {
+      if (ds._emaCE && stratState.ema) emaSignalsCE = ds.data;
+      if (ds._emaPE && stratState.ema) emaSignalsPE = ds.data;
+    });
+
+    // Draw EMA BUY signals (TradingView style)
+    if (stratState.ema && emaSignalsCE && emaSignalsPE) {
+      const { left, right, top, bottom } = chart.chartArea;
+      
+      view.forEach((c, i) => {
+        const sigCE = emaSignalsCE[viewStart + i];
+        const sigPE = emaSignalsPE[viewStart + i];
+        const xMid = xScale.getPixelForValue(i);
+        
+        if (xMid < left || xMid > right) return;
+        
+        // BUY CE - Green UP arrow
+        if (sigCE !== null && sigCE !== undefined) {
+          const yPrice = yScale.getPixelForValue(c[3] - 15);
+          if (yPrice > top && yPrice < bottom) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.fillStyle = '#00e5a0';
+            ctx.strokeStyle = '#00e5a0';
+            ctx.lineWidth = 2;
+            ctx.moveTo(xMid, yPrice - 4);
+            ctx.lineTo(xMid, yPrice + 12);
+            ctx.moveTo(xMid, yPrice - 4);
+            ctx.lineTo(xMid - 6, yPrice + 6);
+            ctx.moveTo(xMid, yPrice - 4);
+            ctx.lineTo(xMid + 6, yPrice + 6);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = '#00e5a0';
+            ctx.arc(xMid, yPrice + 14, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = 'bold 10px Space Mono';
+            ctx.fillStyle = '#00e5a0';
+            ctx.textAlign = 'center';
+            ctx.fillText('CE', xMid, yPrice + 24);
+            ctx.restore();
+          }
+        }
+        
+        // BUY PE - Red DOWN arrow
+        if (sigPE !== null && sigPE !== undefined) {
+          const yPrice = yScale.getPixelForValue(c[2] + 15);
+          if (yPrice > top && yPrice < bottom) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.fillStyle = '#ff3d6b';
+            ctx.strokeStyle = '#ff3d6b';
+            ctx.lineWidth = 2;
+            ctx.moveTo(xMid, yPrice + 4);
+            ctx.lineTo(xMid, yPrice - 12);
+            ctx.moveTo(xMid, yPrice + 4);
+            ctx.lineTo(xMid - 6, yPrice - 6);
+            ctx.moveTo(xMid, yPrice + 4);
+            ctx.lineTo(xMid + 6, yPrice - 6);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = '#ff3d6b';
+            ctx.arc(xMid, yPrice - 14, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = 'bold 10px Space Mono';
+            ctx.fillStyle = '#ff3d6b';
+            ctx.textAlign = 'center';
+            ctx.fillText('PE', xMid, yPrice - 22);
+            ctx.restore();
+          }
+        }
+      });
+    }
+
+    // Draw CSV SELL signals (TradingView style)
+    if (stratState.csv) {
+      const csvSells = window._csvSellSignals || [];
+      const { left, right, top, bottom } = chart.chartArea;
+      
+      csvSells.forEach(sig => {
+        const idx = sig.idx - viewStart;
+        if (idx >= 0 && idx < view.length) {
+          const xMid = xScale.getPixelForValue(idx);
+          if (xMid < left || xMid > right) return;
+          
+          const isSellCE = sig.type === 'SELL_CE';
+          const yPrice = isSellCE 
+            ? yScale.getPixelForValue(view[idx][2] + 20)
+            : yScale.getPixelForValue(view[idx][3] - 20);
+          
+          if (yPrice < top || yPrice > bottom) return;
+          
+          const color = isSellCE ? '#ff9f40' : '#00c9ff';
+          
+          ctx.save();
+          ctx.beginPath();
+          ctx.fillStyle = color;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          
+          if (isSellCE) {
+            // SELL CE - Orange DOWN arrow
+            ctx.moveTo(xMid, yPrice + 4);
+            ctx.lineTo(xMid, yPrice - 12);
+            ctx.moveTo(xMid, yPrice + 4);
+            ctx.lineTo(xMid - 6, yPrice - 6);
+            ctx.moveTo(xMid, yPrice + 4);
+            ctx.lineTo(xMid + 6, yPrice - 6);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(xMid, yPrice - 14, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = 'bold 10px Space Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText('SELL CE', xMid, yPrice - 22);
+          } else {
+            // SELL PE - Blue UP arrow
+            ctx.moveTo(xMid, yPrice - 4);
+            ctx.lineTo(xMid, yPrice + 12);
+            ctx.moveTo(xMid, yPrice - 4);
+            ctx.lineTo(xMid - 6, yPrice + 6);
+            ctx.moveTo(xMid, yPrice - 4);
+            ctx.lineTo(xMid + 6, yPrice + 6);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(xMid, yPrice + 14, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = 'bold 10px Space Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText('SELL PE', xMid, yPrice + 24);
+          }
+          ctx.restore();
+        }
+      });
+    }
+
     ctx.restore();
+    
+    // ═══ Draw S/R, Max Pain, TP/SL lines directly on candle chart ═══
+    if (window._tpslLevels || showSRLines) {
+      const yScale = chart.scales.y;
+      if (!yScale) return;
+      const { left, right, top, bottom } = chart.chartArea;
+      ctx.save();
+      ctx.font = 'bold 9px "Space Mono"';
+      
+      const drawHLine = (price, color, dash, label, side='end') => {
+        const py = yScale.getPixelForValue(price);
+        if (py < top - 2 || py > bottom + 2) return;
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+        ctx.setLineDash(dash || [6,3]);
+        ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke();
+        ctx.setLineDash([]);
+        // Label
+        const tw = ctx.measureText(label).width;
+        const lx = side === 'end' ? right - tw - 4 : left + 4;
+        ctx.fillStyle = 'rgba(0,0,0,.75)';
+        ctx.fillRect(lx - 2, py - 9, tw + 4, 18);
+        ctx.fillStyle = color;
+        ctx.textAlign = side === 'end' ? 'right' : 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, side === 'end' ? right - 4 : left + 4, py);
+      };
+      
+      // S/R + Max Pain
+      if (showSRLines && window._srLevels) {
+        const { resistance, support, maxPain, spot } = window._srLevels;
+        if (spot)       drawHLine(spot,       'rgba(0,201,255,.7)', [2,2],  `● ${spot.toFixed(0)}`);
+        if (support)    drawHLine(support,    'rgba(0,229,160,.9)', [6,3],  `🛡 SUP ${support}`);
+        if (resistance) drawHLine(resistance, 'rgba(255,61,107,.9)',[6,3],  `🚧 RES ${resistance}`);
+        if (maxPain)    drawHLine(maxPain,    'rgba(255,107,0,.9)', [4,2],  `🎯 PAIN ${maxPain}`);
+      }
+      
+      // TP/SL levels
+      if (showTPSL && window._tpslLevels?.length) {
+        window._tpslLevels.forEach(lvl => {
+          drawHLine(lvl.entry, lvl.color,       [],    `ENTRY ${lvl.entry.toFixed(1)}`);
+          drawHLine(lvl.tp1,   '#00e5a0',        [4,3], `TP1 ${lvl.tp1.toFixed(1)}`);
+          drawHLine(lvl.tp2,   '#00c896',        [4,3], `TP2 ${lvl.tp2.toFixed(1)}`);
+          drawHLine(lvl.sl,    '#ff3d6b',        [4,3], `SL ${lvl.sl.toFixed(1)}`);
+        });
+      }
+      
+      ctx.restore();
+    }
   }
 };
 
@@ -5096,6 +5787,11 @@ function buildIndicatorDatasets(candles, viewStart, viewEnd) {
   let cemaCrossSignalsPE = new Array(candles.length).fill(null);
   let emaOpenFull = null, emaCloseFull = null; // for signal box
 
+  // Sync indicator eye buttons
+  activeIndicators.forEach(ind => {
+    const eyeEl = document.getElementById('indEye_' + ind.id);
+    if (eyeEl) eyeEl.style.opacity = ind.visible ? '1' : '0.3';
+  });
   activeIndicators.forEach(ind => {
     if (!ind.visible) return;
     const p = ind.params;
@@ -5175,44 +5871,71 @@ function buildIndicatorDatasets(candles, viewStart, viewEnd) {
       ceLtpRising, peLtpRising,
       ivSafe: (atmRow?.call_options?.option_greeks?.iv||0) < 25,
       isSideways: livePCR>=0.85 && livePCR<=1.15,
+      atmCeIv: atmRow?.call_options?.option_greeks?.iv || 0,
     };
   }
 
   // ── EMA + OI combined signal generation ──────────────
-  const signalBuyCE  = new Array(candles.length).fill(null);
-  const signalBuyPE  = new Array(candles.length).fill(null);
-  const signalSellCE = new Array(candles.length).fill(null);
-  const signalSellPE = new Array(candles.length).fill(null);
-  const signalNoTrade= new Array(candles.length).fill(null);
+  // Signals cached per data load — not recomputed on scroll (prevents repaint)
+  const cacheKey = (document.getElementById('symbolSel')?.value||'') + currentTf + candles.length;
+  
+  let signalBuyCE, signalBuyPE, signalSellCE, signalSellPE, signalNoTrade;
+  
+  if (_cachedSignals && _signalCacheKey === cacheKey) {
+    // Use cached signals — same data, just different view window
+    signalBuyCE   = _cachedSignals.buyCE;
+    signalBuyPE   = _cachedSignals.buyPE;
+    signalSellCE  = _cachedSignals.sellCE;
+    signalSellPE  = _cachedSignals.sellPE;
+    signalNoTrade = _cachedSignals.noTrade;
+    cemaCrossSignalsCE = _cachedSignals.crossCE;
+    cemaCrossSignalsPE = _cachedSignals.crossPE;
+  } else {
+    // Compute fresh signals
+    signalBuyCE   = new Array(candles.length).fill(null);
+    signalBuyPE   = new Array(candles.length).fill(null);
+    signalSellCE  = new Array(candles.length).fill(null);
+    signalSellPE  = new Array(candles.length).fill(null);
+    signalNoTrade = new Array(candles.length).fill(null);
 
-  if (emaCloseFull && emaOpenFull) {
-    for (let i = 3; i < candles.length; i++) {
-      if (emaCloseFull[i]==null||emaOpenFull[i]==null) continue;
-      const bullCross = emaCloseFull[i-1] <= emaOpenFull[i-1] && emaCloseFull[i] > emaOpenFull[i];
-      const bearCross = emaCloseFull[i-1] >= emaOpenFull[i-1] && emaCloseFull[i] < emaOpenFull[i];
-      if (!bullCross && !bearCross) continue;
-      const oiBull = liveOI ? (liveOI.putBuild > liveOI.callBuild || liveOI.pcr > 1.0) : false;
-      const oiBear = liveOI ? (liveOI.callBuild > liveOI.putBuild || liveOI.pcr < 1.0) : false;
-      const isToday = new Date(candles[i][0]).toDateString() === new Date().toDateString();
-      if (liveOI && isToday) {
-        if (bullCross && oiBull && liveOI.ceLtpRising && liveOI.ivSafe) {
-          signalBuyCE[i] = closes[i];
-        } else if (bearCross && oiBear && liveOI.peLtpRising && liveOI.ivSafe) {
-          signalBuyPE[i] = closes[i];
-        } else if (bearCross && liveOI.callWallStrong && liveOI.callBuild > liveOI.putBuild) {
-          signalSellCE[i] = closes[i];
-        } else if (bullCross && liveOI.putWallStrong && liveOI.putBuild > liveOI.callBuild) {
-          signalSellPE[i] = closes[i];
-        } else if ((bullCross || bearCross) && liveOI.isSideways) {
-          signalNoTrade[i] = closes[i];
+    if (emaCloseFull && emaOpenFull) {
+      for (let i = 3; i < candles.length; i++) {
+        if (emaCloseFull[i]==null||emaOpenFull[i]==null) continue;
+        const bullCross = emaCloseFull[i-1] <= emaOpenFull[i-1] && emaCloseFull[i] > emaOpenFull[i];
+        const bearCross = emaCloseFull[i-1] >= emaOpenFull[i-1] && emaCloseFull[i] < emaOpenFull[i];
+        if (!bullCross && !bearCross) continue;
+        const oiBull = liveOI ? (liveOI.putBuild > liveOI.callBuild || liveOI.pcr > 1.0) : false;
+        const oiBear = liveOI ? (liveOI.callBuild > liveOI.putBuild || liveOI.pcr < 1.0) : false;
+        const isToday = new Date(candles[i][0]).toDateString() === new Date().toDateString();
+        if (liveOI && isToday) {
+          if (bullCross && oiBull && liveOI.ceLtpRising && liveOI.ivSafe) {
+            signalBuyCE[i] = closes[i];
+          } else if (bearCross && oiBear && liveOI.peLtpRising && liveOI.ivSafe) {
+            signalBuyPE[i] = closes[i];
+          } else if (bearCross && liveOI.callWallStrong && liveOI.callBuild > liveOI.putBuild) {
+            signalSellCE[i] = closes[i];
+          } else if (bullCross && liveOI.putWallStrong && liveOI.putBuild > liveOI.callBuild) {
+            signalSellPE[i] = closes[i];
+          } else if ((bullCross || bearCross) && liveOI.isSideways) {
+            signalNoTrade[i] = closes[i];
+          }
+        } else if (!liveOI) {
+          if (bullCross) signalBuyCE[i] = closes[i];
+          if (bearCross) signalBuyPE[i] = closes[i];
         }
-      } else if (!liveOI) {
-        if (bullCross) signalBuyCE[i] = closes[i];
-        if (bearCross) signalBuyPE[i] = closes[i];
+        if (bullCross) cemaCrossSignalsCE[i] = closes[i];
+        if (bearCross) cemaCrossSignalsPE[i] = closes[i];
       }
-      if (bullCross) cemaCrossSignalsCE[i] = closes[i];
-      if (bearCross) cemaCrossSignalsPE[i] = closes[i];
     }
+    
+    // Cache the computed signals
+    _cachedSignals = {
+      buyCE: signalBuyCE, buyPE: signalBuyPE,
+      sellCE: signalSellCE, sellPE: signalSellPE,
+      noTrade: signalNoTrade,
+      crossCE: cemaCrossSignalsCE, crossPE: cemaCrossSignalsPE
+    };
+    _signalCacheKey = cacheKey;
   }
 
   const labels = emaAllCandles.slice(viewStart,viewEnd).map(c=>fmtCandleLabel(c[0],currentTf));
@@ -5258,7 +5981,7 @@ function buildIndicatorDatasets(candles, viewStart, viewEnd) {
   if (vSigCE_hist.some(v=>v!=null)) datasets.push({
     type:'scatter', label:'EMA_CE_hist',
     data: vSigCE_hist.map((v,i)=>v!=null?{x:i, y:viewLows[i]-GAP*0.6}:null).filter(Boolean),
-    backgroundColor:'rgba(0,229,160,.45)', pointStyle:'triangle', radius:6, order:0, xAxisID:'x2',
+    backgroundColor:'rgba(0,229,160,.25)', pointStyle:'triangle', radius:4, order:0, xAxisID:'x2',
     datalabels:{ display:true, color:'rgba(0,229,160,.7)', font:{family:'Space Mono',size:8},
       formatter:()=>'CE', anchor:'end', align:'top', offset:2,
       backgroundColor:'rgba(0,0,0,.5)', borderRadius:3, padding:{top:1,bottom:1,left:3,right:3} },
@@ -5266,7 +5989,7 @@ function buildIndicatorDatasets(candles, viewStart, viewEnd) {
   if (vSigPE_hist.some(v=>v!=null)) datasets.push({
     type:'scatter', label:'EMA_PE_hist',
     data: vSigPE_hist.map((v,i)=>v!=null?{x:i, y:viewHighs[i]+GAP*0.6}:null).filter(Boolean),
-    backgroundColor:'rgba(255,61,107,.45)', pointStyle:'triangle', rotation:180, radius:6, order:0, xAxisID:'x2',
+    backgroundColor:'rgba(255,61,107,.25)', pointStyle:'triangle', rotation:180, radius:4, order:0, xAxisID:'x2',
     datalabels:{ display:true, color:'rgba(255,61,107,.7)', font:{family:'Space Mono',size:8},
       formatter:()=>'PE', anchor:'start', align:'bottom', offset:2,
       backgroundColor:'rgba(0,0,0,.5)', borderRadius:3, padding:{top:1,bottom:1,left:3,right:3} },
@@ -5317,7 +6040,73 @@ function buildIndicatorDatasets(candles, viewStart, viewEnd) {
   }
 
   activeStrategies.forEach(strat => {
-    if (!strat.visible || !strat.signals.length) return;
+    if (!strat.visible) return;
+    
+    // ── CSV Strategy: calculate fresh signals using live OI ──
+    if (strat.id === 'strat_csv') {
+      const liveIVnow  = liveOI ? (liveOI.atmCeIv || 20) : 20;
+      const livePCRnow = liveOI ? liveOI.pcr : 1.0;
+      const csvSigs = calcCsvStrategySignals(candles, emaCloseFull, emaOpenFull, liveIVnow, livePCRnow, liveOI);
+      
+      // viewHighs/viewLows for CSV signal positioning
+      const _csvHighs = candles.slice(viewStart, viewEnd).map(c => c[2]);
+      const _csvLows  = candles.slice(viewStart, viewEnd).map(c => c[3]);
+      const _csvRange = (Math.max(..._csvHighs) - Math.min(..._csvLows)) || 50;
+      const GAP2 = Math.max(_csvRange * 0.06, 5);
+      
+      // BUY CE (up triangle, cyan, below candle)
+      const bceData = csvSigs.buyCE.filter(i=>i>=viewStart&&i<viewEnd)
+        .map(i=>({ x:i-viewStart, y:(_csvLows[i-viewStart]||0)-GAP2 }));
+      if (bceData.length) datasets.push({ type:'scatter', label:'CSV_BUY_CE',
+        data:bceData, backgroundColor:'#00c9ff', borderColor:'#fff', borderWidth:1.5,
+        pointStyle:'triangle', radius:14, order:0, xAxisID:'x2',
+        datalabels:{ display:true, color:'#00c9ff', font:{family:'Space Mono',size:9,weight:'bold'},
+          formatter:()=>'▲CE', anchor:'start', align:'bottom', offset:3,
+          backgroundColor:'rgba(0,0,0,.75)', borderRadius:3, padding:{top:2,bottom:2,left:4,right:4} } });
+      
+      // BUY PE (down triangle, orange, above candle)
+      const bpeData = csvSigs.buyPE.filter(i=>i>=viewStart&&i<viewEnd)
+        .map(i=>({ x:i-viewStart, y:(_csvHighs[i-viewStart]||0)+GAP2 }));
+      if (bpeData.length) datasets.push({ type:'scatter', label:'CSV_BUY_PE',
+        data:bpeData, backgroundColor:'#ff9f40', borderColor:'#fff', borderWidth:1.5,
+        pointStyle:'triangle', rotation:180, radius:14, order:0, xAxisID:'x2',
+        datalabels:{ display:true, color:'#ff9f40', font:{family:'Space Mono',size:9,weight:'bold'},
+          formatter:()=>'▼PE', anchor:'end', align:'top', offset:3,
+          backgroundColor:'rgba(0,0,0,.75)', borderRadius:3, padding:{top:2,bottom:2,left:4,right:4} } });
+      
+      // SELL CE (diamond, red, above candle)
+      const scData = csvSigs.sellCE.filter(i=>i>=viewStart&&i<viewEnd)
+        .map(i=>({ x:i-viewStart, y:(_csvHighs[i-viewStart]||0)+GAP2*1.2 }));
+      if (scData.length) datasets.push({ type:'scatter', label:'CSV_SELL_CE',
+        data:scData, backgroundColor:'#ff3d6b', borderColor:'#fff', borderWidth:1.5,
+        pointStyle:'rectRot', radius:11, order:0, xAxisID:'x2',
+        datalabels:{ display:true, color:'#ff3d6b', font:{family:'Space Mono',size:9,weight:'bold'},
+          formatter:()=>'SELL CE', anchor:'end', align:'top', offset:3,
+          backgroundColor:'rgba(0,0,0,.75)', borderRadius:3, padding:{top:2,bottom:2,left:4,right:4} } });
+      
+      // SELL PE (diamond, purple, below candle)
+      const spData = csvSigs.sellPE.filter(i=>i>=viewStart&&i<viewEnd)
+        .map(i=>({ x:i-viewStart, y:(_csvLows[i-viewStart]||0)-GAP2*1.2 }));
+      if (spData.length) datasets.push({ type:'scatter', label:'CSV_SELL_PE',
+        data:spData, backgroundColor:'#7c3aed', borderColor:'#fff', borderWidth:1.5,
+        pointStyle:'rectRot', radius:11, order:0, xAxisID:'x2',
+        datalabels:{ display:true, color:'#a78bfa', font:{family:'Space Mono',size:9,weight:'bold'},
+          formatter:()=>'SELL PE', anchor:'start', align:'bottom', offset:3,
+          backgroundColor:'rgba(0,0,0,.75)', borderRadius:3, padding:{top:2,bottom:2,left:4,right:4} } });
+      
+      // NO TRADE (gray X, small)
+      const ntData = csvSigs.noTrade.filter(i=>i>=viewStart&&i<viewEnd)
+        .map(i=>({ x:i-viewStart, y:(_csvHighs[i-viewStart]||0)+GAP2*0.6 }));
+      if (ntData.length) datasets.push({ type:'scatter', label:'CSV_NO_TRADE',
+        data:ntData, backgroundColor:'rgba(150,150,150,.4)', borderColor:'rgba(150,150,150,.6)',
+        borderWidth:1, pointStyle:'crossRot', radius:6, order:0, xAxisID:'x2',
+        datalabels:{ display:false } });
+      
+      return;
+    }
+    
+    // ── Other strategies (EMA Cross, etc.) ──
+    if (!strat.signals.length) return;
     const longData  = [], shortData = [];
     strat.signals.forEach(sig => {
       const bar = sig.bar;
@@ -5330,6 +6119,20 @@ function buildIndicatorDatasets(candles, viewStart, viewEnd) {
     if (longData.length) datasets.push({ type:'scatter', label: strat.id+'_L', data: longData, backgroundColor: strat.colorLong, borderColor:'rgba(0,0,0,.6)', borderWidth:1, pointStyle:'triangle', radius:11, order:0, xAxisID:'x2' });
     if (shortData.length) datasets.push({ type:'scatter', label: strat.id+'_S', data: shortData, backgroundColor: strat.colorShort, borderColor:'rgba(0,0,0,.6)', borderWidth:1, pointStyle:'triangle', rotation:180, radius:11, order:0, xAxisID:'x2' });
   });
+
+
+  // Add EMA signal datasets with flags for candleDrawPlugin
+  const emaSignalCE = {
+    type:'line', label:'EMA_SIG_CE', data:[...cemaCrossSignalsCE],
+    borderColor:'transparent', pointRadius:0, borderWidth:0, fill:false,
+    _emaCE: true, _hidden: true
+  };
+  const emaSignalPE = {
+    type:'line', label:'EMA_SIG_PE', data:[...cemaCrossSignalsPE],
+    borderColor:'transparent', pointRadius:0, borderWidth:0, fill:false,
+    _emaPE: true, _hidden: true
+  };
+  datasets.push(emaSignalCE, emaSignalPE);
 
   return { datasets, signalsCE: cemaCrossSignalsCE, signalsPE: cemaCrossSignalsPE, emaCloseFull, emaOpenFull };
 }
@@ -5666,7 +6469,271 @@ function toggleOITracker() {
 /* ══ OPTIONS BATTLEGROUND ENGINE ══════════════════════════ */
 window.navinPriceTracker = { ce: 0, pe: 0, spot: 0, spotPrev: 0 };
 window.navinLastPain = 0;
-window._spotHistory = [];  // last 10 spot prices for momentum
+window._spotHistory  = [];   // last 10 spot prices for momentum
+window._emaFlipLog  = [];   // EMA bias history for choppy detection
+window._emaFlipCount = 0;   // how many times EMA flipped today
+
+// ═══ Cursor Tool Menu ═══
+function toggleCursorMenu() {
+  const m = document.getElementById('cursorMenu');
+  if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function closeCursor(e) {
+      const wrap = document.getElementById('cursorToolWrap');
+      if (wrap && !wrap.contains(e.target)) {
+        const m2 = document.getElementById('cursorMenu');
+        if (m2) m2.style.display = 'none';
+      }
+      document.removeEventListener('click', closeCursor);
+    });
+  }, 50);
+}
+
+function selectCursorTool(tool, icon, label) {
+  const btn = document.getElementById('cursorToolBtn');
+  if (btn) btn.classList.remove('active');
+  const curIcon = document.getElementById('cursorIcon');
+  const curLabel = document.getElementById('cursorLabel');
+  if (curIcon) curIcon.textContent = icon;
+  if (curLabel) curLabel.textContent = label;
+  document.getElementById('cursorMenu').style.display = 'none';
+  // Update active state
+  document.querySelectorAll('.cursor-menu-item').forEach(el => el.classList.remove('active'));
+  setDrawTool(tool);
+}
+
+let valTooltipEnabled = true;
+function toggleValTooltip() {
+  valTooltipEnabled = !valTooltipEnabled;
+  const t = document.getElementById('tooltipToggle');
+  if (t) {
+    t.style.background = valTooltipEnabled ? 'var(--green)' : 'var(--border2)';
+    t.querySelector('div').style.left = valTooltipEnabled ? '19px' : '3px';
+  }
+}
+
+// ═══ S/R Lines + Max Pain toggle ═══
+let showSRLines = true;
+function toggleSRLines() {
+  showSRLines = !showSRLines;
+  const card = document.getElementById('srLineCard');
+  if (card) card.style.opacity = showSRLines ? '1' : '0.4';
+  renderEmaChart();
+}
+
+// ═══ TP/SL toggle ═══
+let showTPSL = true;
+function toggleTPSL() {
+  showTPSL = !showTPSL;
+  const card = document.getElementById('tpslCard');
+  if (card) card.style.opacity = showTPSL ? '1' : '0.4';
+  renderEmaChart();
+}
+
+// ═══ CSV Strategy Indicator ═══
+// Based on 8-day data strategy:
+// BUY CE:  EMA BULL + PCR>1.0 + IV<22% + CE/PE ratio<0.93 (PE heavy = bottom)
+// BUY PE:  EMA BEAR + PCR<1.0 + IV<22% + CE/PE ratio>1.1 (CE heavy = top)
+// SELL PE: EMA BULL + PCR>1.1 + IV>25% (82% win)
+// SELL CE: EMA BEAR + PCR<0.9 + IV>25% (57% win)
+// EXIT:    RSI>70 (overbought) or RSI<30 (oversold) or ratio reversal
+
+
+// ═══ Compute CSV Strategy Signals from candle data ═══
+// ═══ Compute TP/SL levels from last signal ═══
+function computeTPSL(candles, signals) {
+  const { buyCE, buyPE, sellCE, sellPE, atrArr } = signals;
+  const levels = [];
+  
+  // Find last signal
+  for (let i = candles.length-1; i >= 0; i--) {
+    const atr = atrArr[i] || 10;
+    
+    if (buyCE[i] !== null) {
+      const entry = candles[i][4];
+      levels.push({ type:'BUY CE', entry, bar:i,
+        tp1: entry + atr * 1.5,
+        tp2: entry + atr * 3.0,
+        sl:  entry - atr * 1.0,
+        color: '#00e5a0' });
+      break;
+    }
+    if (buyPE[i] !== null) {
+      const entry = candles[i][4];
+      levels.push({ type:'BUY PE', entry, bar:i,
+        tp1: entry - atr * 1.5,
+        tp2: entry - atr * 3.0,
+        sl:  entry + atr * 1.0,
+        color: '#ff3d6b' });
+      break;
+    }
+    if (sellPE[i] !== null) {
+      const entry = candles[i][4];
+      levels.push({ type:'SELL PE', entry, bar:i,
+        tp1: entry - atr * 1.5,
+        tp2: entry - atr * 2.5,
+        sl:  entry + atr * 0.8,
+        color: '#ff9f40' });
+      break;
+    }
+    if (sellCE[i] !== null) {
+      const entry = candles[i][4];
+      levels.push({ type:'SELL CE', entry, bar:i,
+        tp1: entry + atr * 1.5,
+        tp2: entry + atr * 2.5,
+        sl:  entry - atr * 0.8,
+        color: '#7c3aed' });
+      break;
+    }
+  }
+  return levels;
+}
+
+// CE/PE History for turning point tracking
+window._cePeHistory = [];
+window._lastCePeSignal = '';
+
+function updateCePeRatioPanel() {
+  if (!chainData || !chainData.length) return;
+  const panel = document.getElementById('cePeRatioPanel');
+  if (panel) panel.style.display = 'block';
+  
+  const instrKey = document.getElementById('symbolSel')?.value || '';
+  const step     = INSTRUMENTS[instrKey]?.step || 50;
+  const spot     = chainData[0]?.underlying_spot_price || 0;
+  const atm      = Math.round(spot / step) * step;
+  const atmRow   = chainData.find(d => d.strike_price === atm);
+  
+  if (!atmRow) return;
+  const ce  = atmRow.call_options?.market_data?.ltp  || 0;
+  const pe  = atmRow.put_options?.market_data?.ltp   || 0;
+  const pcr = (() => {
+    let tc=0,tp=0;
+    chainData.forEach(d=>{tc+=d.call_options?.market_data?.oi||0; tp+=d.put_options?.market_data?.oi||0;});
+    return tc>0 ? tp/tc : 1;
+  })();
+  
+  if (!ce || !pe) return;
+  const ratio = ce / pe;
+  
+  // RSI from EMA chart
+  let rsi = 50;
+  if (emaAllCandles.length > 14) {
+    const cs = emaAllCandles.map(c=>c[4]);
+    const ra = calcRSI(cs, 14);
+    rsi = ra[ra.length-1] || 50;
+  }
+  
+  const emaBias = (() => {
+    if (emaAllCandles.length>5) {
+      const cs=emaAllCandles.map(c=>c[4]); const os=emaAllCandles.map(c=>c[1]);
+      const ec=calcEMA(cs,6); const eo=calcEMA(os,6); const li=emaAllCandles.length-1;
+      return ec[li]>eo[li]?'BULLISH':'BEARISH';
+    }
+    return document.getElementById('sentTrendVal')?.textContent||'NEUTRAL';
+  })();
+  
+  // ── Signal logic from 8-day data ──
+  let signal = '', signalColor = 'var(--accent)', signalBg = 'rgba(0,201,255,.1)', detail = '';
+  const now = new Date();
+  const ist = new Date(now.getTime()+5.5*60*60*1000);
+  const timeStr = ist.toISOString().slice(11,16);
+  
+  // TURNING POINT SIGNALS
+  const ceHeavy  = ratio > 1.15;   // CE >> PE = top near (8-day: confirmed)
+  const peHeavy  = ratio < 0.87;   // PE >> CE = bottom near (8-day: confirmed)
+  const balanced = ratio >= 0.95 && ratio <= 1.05;  // sideways
+  const mildCe   = ratio > 1.05 && ratio <= 1.15;   // slight CE bias
+  const mildPe   = ratio >= 0.87 && ratio < 0.95;   // slight PE bias
+  
+  // 2-candle early warning: check PCR trend
+  if (!window._cePeHistory) window._cePeHistory = [];
+  const prevRatio = window._cePeHistory.length ? window._cePeHistory[window._cePeHistory.length-1].ratio : ratio;
+  const ratioFalling = ratio < prevRatio - 0.03;  // CE losing vs PE = bearish shift
+  const ratioRising  = ratio > prevRatio + 0.03;  // CE gaining vs PE = bullish shift
+  
+  if (ceHeavy) {
+    signal = '🔴 CE HEAVY — TOP NEAR';
+    signalColor = '#ff3d6b'; signalBg = 'rgba(255,61,107,.12)';
+    detail = `CE ₹${ce.toFixed(1)} >> PE ₹${pe.toFixed(1)} (ratio ${ratio.toFixed(3)}) — CE overpriced. 8-day: spot likely to FALL next 2-5 candles.<br>` +
+             `⚠ EXIT CE positions. Consider PE buy if EMA confirms bear.`;
+  } else if (peHeavy) {
+    signal = '🟢 PE HEAVY — BOTTOM NEAR';
+    signalColor = '#00e5a0'; signalBg = 'rgba(0,229,160,.12)';
+    detail = `PE ₹${pe.toFixed(1)} >> CE ₹${ce.toFixed(1)} (ratio ${ratio.toFixed(3)}) — PE overpriced. 8-day: spot likely to RISE next 2-5 candles.<br>` +
+             `✅ BUY CE opportunity. 10-Apr 09:16 → ratio 0.86 → spot +130pts!`;
+  } else if (balanced) {
+    signal = '↔ BALANCED — SIDEWAYS';
+    signalColor = 'var(--yellow)'; signalBg = 'rgba(255,208,0,.08)';
+    const cheaperSide = ce < pe ? `CE ₹${ce.toFixed(1)} sasta` : `PE ₹${pe.toFixed(1)} sasta`;
+    detail = `CE ≈ PE (ratio ${ratio.toFixed(3)}) — Range bound market. RSI ${rsi.toFixed(0)}.<br>` +
+             `Strategy: ${cheaperSide} kharido. Exit when ratio crosses 1.12 ya 0.88.`;
+  } else if (mildCe) {
+    signal = ratioRising ? '⚠ CE RISING — WATCH TOP' : '📈 MILD CE BIAS';
+    signalColor = ratioRising ? '#ff9f40' : 'var(--green)'; signalBg = 'rgba(255,159,64,.08)';
+    detail = `Ratio ${ratio.toFixed(3)} — CE slightly heavy. ${ratioRising?'Ratio rising fast — top forming soon. Watch for exit.':'Mild bullish bias. Not extreme yet.'}`;
+  } else if (mildPe) {
+    signal = ratioFalling ? '⚠ CE FALLING — WATCH BOTTOM' : '📉 MILD PE BIAS';
+    signalColor = ratioFalling ? '#ff9f40' : 'var(--red)'; signalBg = 'rgba(255,107,0,.08)';
+    detail = `Ratio ${ratio.toFixed(3)} — PE slightly heavy. ${ratioFalling?'Ratio falling fast — bottom forming. Watch for entry.':'Mild bearish bias.'}`;
+  }
+  
+  // ── 2-CANDLE PRE-WARNING ──
+  // RSI confirms: RSI>65 + CE heavy = strong top signal
+  //               RSI<45 + PE heavy = strong bottom signal
+  let preWarn = '';
+  if (ratio > 1.08 && rsi > 65) {
+    preWarn = ` <b style="color:#ff3d6b;">⚡ RSI ${rsi.toFixed(0)}>65 + CE heavy = TOP signal! 2 candles mein girna possible.</b>`;
+  } else if (ratio < 0.93 && rsi < 45) {
+    preWarn = ` <b style="color:#00e5a0;">⚡ RSI ${rsi.toFixed(0)}<45 + PE heavy = BOTTOM signal! 2 candles mein uthna possible.</b>`;
+  } else if (ratio > 1.08 && emaBias === 'BEARISH') {
+    preWarn = ` <b style="color:#ff9f40;">⚠ CE heavy + EMA BEAR = top confirmation. Exit CE longs.</b>`;
+  } else if (ratio < 0.93 && emaBias === 'BULLISH') {
+    preWarn = ` <b style="color:#00c896;">✅ PE heavy + EMA BULL = bottom confirmation. CE entry ok.</b>`;
+  }
+  
+  // Update history
+  window._cePeHistory.push({ time:timeStr, ratio, ce, pe, signal, rsi, pcr });
+  if (window._cePeHistory.length > 20) window._cePeHistory.shift();
+  
+  // Log new signals
+  const newSig = ceHeavy ? 'TOP' : peHeavy ? 'BOTTOM' : balanced ? 'SIDE' : 'MID';
+  if (newSig !== window._lastCePeSignal && (ceHeavy||peHeavy)) {
+    logNotif(`CE/PE: ${signal} @ ${timeStr} ratio=${ratio.toFixed(3)}`);
+    window._lastCePeSignal = newSig;
+  }
+  
+  // ── Update DOM ──
+  const el = id => document.getElementById(id);
+  if (el('ceLtpDisp')) el('ceLtpDisp').textContent = ce.toFixed(1);
+  if (el('peLtpDisp')) el('peLtpDisp').textContent = pe.toFixed(1);
+  
+  // Ratio bar: CE bar from left, PE bar from right
+  const ceW = Math.min(48, ratio > 1 ? 48 : ratio * 48);
+  const peW = Math.min(48, ratio < 1 ? 48 : (1/ratio)*48);
+  if (el('ceBar')) el('ceBar').style.width = ceW + '%';
+  if (el('peBar')) el('peBar').style.width = peW + '%';
+  
+  if (el('cePeRatioSignal')) {
+    el('cePeRatioSignal').textContent = signal || 'NEUTRAL';
+    el('cePeRatioSignal').style.color = signalColor;
+    el('cePeRatioSignal').style.background = signalBg;
+    el('cePeRatioSignal').style.borderColor = signalColor + '44';
+  }
+  
+  if (el('cePeRatioDetail')) {
+    el('cePeRatioDetail').innerHTML = detail + preWarn;
+    el('cePeRatioDetail').style.color = signalColor;
+  }
+  
+  // History log (last 5 signals)
+  const histHtml = window._cePeHistory.slice(-6).reverse().map(h => 
+    `<span style="color:${h.ratio>1.12?'#ff3d6b':h.ratio<0.88?'#00e5a0':'var(--muted)'}">` +
+    `${h.time} ratio=${h.ratio.toFixed(3)} CE=${h.ce.toFixed(0)} PE=${h.pe.toFixed(0)} RSI=${h.rsi.toFixed(0)}</span>`
+  ).join('<br>');
+  if (el('cePeHistory')) el('cePeHistory').innerHTML = histHtml;
+}
 
 function updateOptionsBattle() {
   if (!chainData || !chainData.length) return;
@@ -5710,6 +6777,31 @@ function updateOptionsBattle() {
     const prevSpot = histLen >= 5 ? window._spotHistory[histLen - 5] : window._spotHistory[0];
     const ceMomo = prevSpot > 0 ? ((spot - prevSpot) / prevSpot) * 100 : 0;
 
+    // EMA flip tracking (for choppy day detection)
+    const instrKey2  = document.getElementById('symbolSel')?.value || '';
+    const step2      = INSTRUMENTS[instrKey2]?.step || 50;
+    const atm2       = Math.round(spot / step2) * step2;
+    const atmRow2e   = chainData.find(d => d.strike_price === atm2);
+    const liveIVe    = atmRow2e?.call_options?.option_greeks?.iv || 0;
+    // Track EMA from sentTrendVal (updated by updateSentimentDash)
+    const currentEMA = (() => {
+      if (emaAllCandles.length > 5) {
+        const cs = emaAllCandles.map(c => c[4]);
+        const os = emaAllCandles.map(c => c[1]);
+        const ec = calcEMA(cs, 6); const eo = calcEMA(os, 6);
+        const li = emaAllCandles.length-1;
+        return (ec[li]!=null && eo[li]!=null) ? (ec[li]>eo[li]?'BULLISH':'BEARISH') : 'NEUTRAL';
+      }
+      return document.getElementById('sentTrendVal')?.textContent || 'NEUTRAL';
+    })();
+    if (!window._emaFlipLog) window._emaFlipLog = [];
+    const prevEMABias = window._emaFlipLog.length ? window._emaFlipLog[window._emaFlipLog.length-1] : currentEMA;
+    if (currentEMA !== prevEMABias && currentEMA !== 'NEUTRAL') {
+      window._emaFlipCount = (window._emaFlipCount || 0) + 1;
+    }
+    window._emaFlipLog.push(currentEMA);
+    if (window._emaFlipLog.length > 100) window._emaFlipLog.shift();
+
     // CE LTP momentum (secondary)
     const ceLtpMomo = window.navinPriceTracker.ce > 0
       ? ((cLTP - window.navinPriceTracker.ce) / window.navinPriceTracker.ce) * 100 : 0;
@@ -5723,8 +6815,14 @@ function updateOptionsBattle() {
     let status='⚖️ SIDEWAYS: No clear edge.',color='var(--yellow)',tag='';
     // IV check first — if seller day, no buy signals
     const liveIV = atmCE.iv||0;  // already in %
+    // Choppy day detection
+    const flipCount = window._emaFlipCount || 0;
+    const isChoppy  = flipCount >= 8;   // 8+ flips = choppy (7-day data confirms)
     if(liveIV > 25){
       status=`🔴 SELLER DAY — IV ${liveIV.toFixed(0)}% > 25%. Buying avoid karo.`;color='#ff3d6b';
+    } else if(liveIV > 15 && liveIV <= 18) {
+      // NEW: 15-18% = VERY RISKY (44% win) - worse than 18-25%!
+      status=`🔴 VERY RISKY ZONE — IV ${liveIV.toFixed(0)}% (15-18%). CE sirf 44% win!`;color='#ff4400';
     } else if(peWriters>ceWriters*1.5&&ceMomo<-0.15){status='⚠️ SWING ALERT: EXIT LONGS — Spot girne laga';color='#ff9f40';}
     else if(peWriters>ceWriters*2.2&&ceMomo>0&&liveIV<18){status=`🚀 CE BUYING: ${atm} CE @ ₹${cLTP.toFixed(2)}`;tag=' (IV ok + Trend ↑)';color='#00e5a0';}
     else if(peWriters>ceWriters*1.5&&ceMomo>=0&&liveIV<25){status=`📈 BULLISH BIAS: ${atm} CE consider karo`;tag=' (watch IV)';color='#00c896';}
@@ -5732,14 +6830,16 @@ function updateOptionsBattle() {
     else if(ceWriters>peWriters*1.5&&ceMomo<=0&&liveIV<25){status=`🔴 BEARISH BIAS: ${atm} PE consider karo`;tag=' (watch IV)';color='#ff6b6b';}
     const momoColor = ceMomo > 0.1 ? '#00e5a0' : ceMomo < -0.1 ? '#ff3d6b' : '#ffd000';
     const momoLabel = ceMomo > 0.3 ? '📈 UPAR' : ceMomo < -0.3 ? '📉 NEECHE' : '➡ FLAT';
+    const choppyTag = isChoppy
+      ? `<span style="color:#ffd000;font-weight:bold;background:rgba(255,208,0,.1);padding:2px 8px;border-radius:4px;border:1px solid rgba(255,208,0,.3);">↔ CHOPPY: EMA ${flipCount}x flip</span>`
+      : `<span style="color:#00e5a0;">✅ EMA stable (${flipCount} flips)</span>`;
     adviceEl.innerHTML=`<div style="color:${color};font-weight:bold;">${status}${tag}</div>
       <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;font-size:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:8px;">
         <span style="color:var(--muted)">SPOT MOMENTUM (2.5min):</span>
         <span style="color:${momoColor};font-weight:bold;">${momoLabel} ${ceMomo>=0?'+':''}${ceMomo.toFixed(3)}%</span>
         <span style="color:var(--muted)">ATM CE LTP Δ:</span>
         <span style="color:${ceLtpMomo>=0?'#00e5a0':'#ff3d6b'}">${ceLtpMomo>=0?'+':''}${ceLtpMomo.toFixed(2)}%</span>
-        <span style="color:var(--muted)">Refreshes:</span>
-        <span style="color:var(--accent)">${histLen}</span>
+        ${choppyTag}
         ${painAlert}
       </div>`;
   }
@@ -6290,24 +7390,41 @@ function runBuyerSellerAdvisor() {
   });
   const pcr = totalCallOI > 0 ? totalPutOI/totalCallOI : 0;
 
-  // EMA bias from last signal
+  // EMA bias from chart
   const emaBias = document.getElementById('sentTrendVal')?.textContent || 'NEUTRAL';
+  
+  // Choppy day detection (7-day data: >8 EMA flips = choppy = no trade)
+  const flipCount2 = window._emaFlipCount || 0;
+  const isChoppyDay = flipCount2 >= 8;
 
   // ═══ SELLER SCORE (0-6) ═══
   // Thresholds based on 2-day CSV analysis:
   // Expiry day: IV 33-45%, Theta 400-870
   // Normal day (DTE 1-3): IV 28-32%, Theta 210-243
   // Buyer safe only when IV < 18%
-  const thetaLimit = dte === 0 ? 350 : dte === 1 ? 180 : 150;
-  const ivSellerLimit = 25;   // IV > 25% = seller dominant any day
-  const ivBuyerSafe   = 18;   // IV < 18% = safe for buying
+  // === 8-DAY DATA THRESHOLDS (867 rows) ===
+  // IV<15=83% win | IV 15-18=44%(VERY RISKY) | IV 18-25=53%(RISKY) | IV>25=41%(SELLER) | DTE=0=36%
+  // SELL PE: IV>25+BULL+PCR>1.1 = 82% win (UPGRADED!)
+  const thetaLimit    = dte === 0 ? 350 : dte === 1 ? 180 : 150;
+  const ivSellerLimit = 25;   // >25 → SELLER DAY
+  const ivBuyerSafe   = 15;   // <15 → BUY (83% win)
+  const ivVeryRisky   = 18;   // 15-18 → VERY RISKY (44% win — WORSE than 18-25!)
+  const ivRiskyTop    = 25;   // 18-25 → RISKY zone (53% marginal)
+  const ivSellCE      = 25;   // >25+BEAR+PCR<0.9 → SELL CE (57%)
+  const ivSellPE      = 25;   // >25+BULL+PCR>1.1 → SELL PE (82%)
+  const ivStrong      = 35;   // >35 → STRONG SELLER (61%)
 
   let sellerScore = 0;
   const sellerFlags = [];
+  let buyerScore = 0;
+  const buyerFlags = [];
 
-  if (ce_iv > ivSellerLimit) { sellerScore += 2; sellerFlags.push(`❌ IV ${ce_iv.toFixed(0)}% > ${ivSellerLimit}% — SELLER DAY`); }
-  else if (ce_iv > ivBuyerSafe) { sellerScore++; sellerFlags.push(`⚠️ IV ${ce_iv.toFixed(0)}% (${ivBuyerSafe}-${ivSellerLimit}%) — risky zone`); }
-  else { sellerFlags.push(`✅ IV ${ce_iv.toFixed(0)}% < ${ivBuyerSafe}% — buyer safe zone`); }
+  // 8-day data (867 rows)
+  if (ce_iv > 35)        { sellerScore += 3; sellerFlags.push(`🔴 IV ${ce_iv.toFixed(0)}%>35 — STRONG SELLER (61% sell win). Short straddle.`); }
+  else if (ce_iv > 25)   { sellerScore += 2; sellerFlags.push(`🔴 IV ${ce_iv.toFixed(0)}%>25 — SELLER DAY. CE/PE 41-42%. SELL PE 82% win!`); }
+  else if (ce_iv > 18)   { sellerScore++;    sellerFlags.push(`⚠️ IV ${ce_iv.toFixed(0)}% RISKY (18-25%). CE 53% marginal. PCR>1.15+BULL needed.`); }
+  else if (ce_iv > 15)   { sellerScore += 2; sellerFlags.push(`🔴 IV ${ce_iv.toFixed(0)}% VERY RISKY (15-18%). CE only 44%! Worse than 18-25% zone!`); }
+  else if (ce_iv > 0)    { buyerScore += 2;  buyerFlags.push(`✅ IV ${ce_iv.toFixed(0)}%<15 — BUY ZONE! 8-day: 83% win avg +69.`); }
 
   if (ce_theta > thetaLimit) { sellerScore++; sellerFlags.push(`❌ Theta ${ce_theta.toFixed(0)} > ${thetaLimit} (DTE=${dte})`); }
   else { sellerFlags.push(`✅ Theta ${ce_theta.toFixed(0)} < ${thetaLimit} — decay ok`); }
@@ -6327,8 +7444,6 @@ function runBuyerSellerAdvisor() {
   else { sellerFlags.push(`✅ DTE=${dte} — theta normal`); }
 
   // ═══ BUYER SCORE (0-5) ═══
-  let buyerScore = 0;
-  const buyerFlags = [];
 
   const ivCheap = ce_iv < ivBuyerSafe;   // < 18% = truly cheap
   const ivRisky = ce_iv >= ivBuyerSafe && ce_iv < ivSellerLimit; // 18-25% = risky
@@ -6363,11 +7478,25 @@ function runBuyerSellerAdvisor() {
 
   const sellerWin = sellerScore >= 3;
 
-  if (sellerWin && dte === 0) {
-    ceVerdict = '🚫 MAT KAR'; ceColor = '#ff3d6b';
-    ceReason  = 'Expiry day — Theta bahut zyada, CE definitely 0 hoga';
-    peVerdict = '🚫 MAT KAR'; peColor = '#ff3d6b';
-    peReason  = 'Expiry day — Seller dominant, buying BAND';
+  // Expiry day special: SELL strategies instead of BUY
+  if (dte === 0) {
+    const emaBias = document.getElementById('sentTrendVal')?.textContent || 'NEUTRAL';
+    if (emaBias.includes('BULLISH') || pcr > 1.1) {
+      ceVerdict = '✅ SELL CE'; ceColor = '#00e5a0';
+      ceReason  = `Expiry bullish — CE theta se kha jayega, shorting safe`;
+      peVerdict = '✅ SELL PE'; peColor = '#00e5a0';
+      peReason  = `Expiry bullish (PCR ${pcr.toFixed(2)}) — PE theta aapka profit!`;
+    } else if (emaBias.includes('BEARISH') || pcr < 0.85) {
+      ceVerdict = '✅ SELL CE'; ceColor = '#00e5a0';
+      ceReason  = `Expiry bearish (PCR ${pcr.toFixed(2)}) — CE theta aapka profit!`;
+      peVerdict = '✅ SELL PE'; peColor = '#00e5a0';
+      peReason  = `Expiry bearish — PE theta se kha jayega, shorting safe`;
+    } else {
+      ceVerdict = '✅ SELL CE'; ceColor = '#00e5a0';
+      ceReason  = `Expiry neutral — Short CE, theta decay aapka profit`;
+      peVerdict = '✅ SELL PE'; peColor = '#00e5a0';
+      peReason  = `Expiry neutral — Short PE, theta decay aapka profit`;
+    }
   } else if (sellerWin) {
     ceVerdict = '⚠️ AVOID';   ceColor = '#ff9f40';
     ceReason  = `IV ${ce_iv.toFixed(0)}% zyada + Theta high — seller ka din`;
@@ -6422,18 +7551,73 @@ function runBuyerSellerAdvisor() {
 
   // ═══ Final Advice ═══
   let finalAdvice = '';
+  // 6-day CSV data logic (650 rows)
+  const cbld = callBuild, pbld = putBuild;
+  const oiBal = (cbld>0&&pbld>0) ? Math.min(cbld,pbld)/Math.max(cbld,pbld) : 0;
+  const isSideways = pcr>=0.9 && pcr<=1.1 && oiBal>0.65;
+  const emaBull2 = emaBias.includes('BULLISH') || emaBias.includes('Bull');
+  const emaBear2 = emaBias.includes('BEARISH') || emaBias.includes('Bear');
+  const sellPE2  = ce_iv>30 && emaBull2 && pcr>1.2;
+  const sellPE3  = ce_iv>25 && emaBull2 && pcr>1.1;
+  const sellCE2  = ce_iv>30 && emaBear2;
+  const sellCE3  = ce_iv>25 && emaBear2 && pcr<0.9;
+
   if (dte === 0) {
-    finalAdvice = `🔴 <b>EXPIRY DAY — CE/PE buying BILKUL MAT KARO</b><br>Theta ${ce_theta.toFixed(0)}/day hai. Premium minute minute mein ghis raha hai. Aaj sirf sellers kamate hain. Agar position hai toh 2 PM se pehle exit karo.`;
-  } else if (ce_iv > ivSellerLimit) {
-    finalAdvice = `🔴 <b>SELLER DAY — IV ${ce_iv.toFixed(0)}% > ${ivSellerLimit}%</b><br>Options bahut mehengi hain. Direction sahi ho tab bhi premium wapas nahi milega (aaj SENSEX 489 pts gira, phir bhi PE -4% hua). <b>IV < 18% hone ka wait karo.</b>`;
-  } else if (ce_iv > ivBuyerSafe) {
-    finalAdvice = `⚠️ <b>RISKY ZONE — IV ${ce_iv.toFixed(0)}% (${ivBuyerSafe}-${ivSellerLimit}%)</b><br>Buying possible hai par risky. Agar strong signal ho tabhi enter karo, warna wait karo IV < ${ivBuyerSafe}% ho.`;
-  } else if (ceVerdict.includes('CE BUY')) {
-    finalAdvice = `🟢 <b>CE BUY opportunity:</b> ATM ${atm} CE @ ₹${ce_ltp.toFixed(2)}<br>IV sasta (${ce_iv.toFixed(0)}%), Delta ATM zone (${ce_delta.toFixed(3)}), EMA + PCR bullish confirm kar rahe hain.<br>Stop loss: 40% premium loss pe exit karo.`;
-  } else if (peVerdict.includes('PE BUY')) {
-    finalAdvice = `🟢 <b>PE BUY opportunity:</b> ATM ${atm} PE @ ₹${pe_ltp.toFixed(2)}<br>IV sasta (${pe_iv.toFixed(0)}%), Delta ATM zone (${pe_delta.toFixed(3)}), EMA + PCR bearish confirm kar rahe hain.<br>Stop loss: 40% premium loss pe exit karo.`;
+    const emaBias = document.getElementById('sentTrendVal')?.textContent || 'NEUTRAL';
+    if (emaBias.includes('BULLISH') || pcr > 1.1) {
+      finalAdvice = 'EXPIRY DAY -- BULLISH: SELL PE!|Spot ' + spot + ' (PCR ' + pcr.toFixed(2) + ' bullish). CE mat karo -- theta kha jayega. SELL PE @ ' + atm + ' PE Rs.' + pe_ltp.toFixed(1) + '. Theta aapka friend! SL: +50%, Target: -30%.';
+    } else if (emaBias.includes('BEARISH') || pcr < 0.85) {
+      finalAdvice = 'EXPIRY DAY -- BEARISH: SELL CE!|Spot neeche jaa sakta hai (PCR ' + pcr.toFixed(2) + ' bearish). PE mat karo -- theta kha jayega. SELL CE @ ' + atm + ' CE Rs.' + ce_ltp.toFixed(1) + '. Theta aapka friend! SL: +50%, Target: -30%.';
+    } else {
+      finalAdvice = 'EXPIRY DAY -- NEUTRAL: SHORT STRADDLE!|Direction unclear. SELL CE Rs.' + ce_ltp.toFixed(1) + ' + SELL PE Rs.' + pe_ltp.toFixed(1) + ' @ ' + atm + '. Theta se dono taraf profit.';
+    }
+  } else if (ce_iv > 35) {
+    if (sellPE2||sellPE3) finalAdvice = `💰 <b>SELL PE</b> — IV ${ce_iv.toFixed(0)}%>35 + EMA BULL + PCR ${pcr.toFixed(2)}>1.1<br>6-din: 74% PE gira. ${atm} PE sell karo. Stop: 50% premium increase pe exit.`;
+    else if (sellCE2||sellCE3) finalAdvice = `💰 <b>SELL CE</b> — IV ${ce_iv.toFixed(0)}%>35 + EMA BEAR<br>6-din: 64% CE gira. ${atm} CE sell karo. Stop: 50% premium increase pe exit.`;
+    else finalAdvice = `🔴 <b>STRONG SELLER — IV ${ce_iv.toFixed(0)}%>35</b><br>6-din: 64% seller wins. Mixed EMA/PCR. Koi trade nahi. Wait karo.`;
+  } else if (sellPE2 || sellPE3) {
+    finalAdvice = `💰 <b>SELL PE</b> — IV ${ce_iv.toFixed(0)}%>25 + EMA BULL + PCR ${pcr.toFixed(2)}>1.1<br>6-din: ${sellPE2?'71%':'70%'} PE gira. ${atm} PE sell karo. Stop: 50% premium increase pe exit.`;
+  } else if (sellCE2 || sellCE3) {
+    finalAdvice = `💰 <b>SELL CE</b> — IV ${ce_iv.toFixed(0)}%>25 + EMA BEAR${sellCE3?' + PCR '+pcr.toFixed(2)+'<0.9':''}<br>6-din: ${sellCE3?'62%':'61%'} CE gira. ${atm} CE sell karo. Stop: 50% premium increase pe exit.`;
+  } else if (isSideways) {
+    finalAdvice = `↔ <b>SIDEWAYS</b> — PCR ${pcr.toFixed(2)} neutral + OI ${(oiBal*100).toFixed(0)}% balanced<br>Dono writers active, market kahin nahi jaayega. Iron Condor: ${atm-step} PE sell + ${atm+step} CE sell. Ya breakout ka wait karo.`;
+  } else if (ce_iv > 25) {
+    finalAdvice = `🔴 <b>SELLER DAY — IV ${ce_iv.toFixed(0)}%>25</b><br>6-din: Buyers 36-40% only. Koi buy/sell signal nahi. WAIT karo.`;
+  } else if (ce_iv > 15) {
+    // Risky zone: 7-day refined thresholds
+    // EMA BULL + PCR>1.15 → 61% CE win (+1.2 avg)
+    // EMA BULL + PCR>1.1  → 60% CE win (+0.9 avg)  
+    // EMA BEAR + PCR<0.9  → AVOID (38-45% only)
+    // Choppy (>8 EMA flips) → NO TRADE regardless
+    if (isChoppyDay) {
+      finalAdvice = `↔ <b>CHOPPY DAY — EMA ${flipCount2} baar flip hua</b><br>7-din data: EMA itni baar flip kare toh market direction nahi pakad raha. <b>Koi trade nahi.</b> IV ${ce_iv.toFixed(0)}% bhi risky zone mein hai. Wait karo kal tak.`;
+    } else if (emaBull2 && pcr > 1.15) {
+      finalAdvice = `🟡 <b>CE BUY POSSIBLE — IV ${ce_iv.toFixed(0)}% RISKY ZONE</b><br>7-din: EMA BULL + PCR ${pcr.toFixed(2)}>1.15 = 61% CE win (avg +1.2). <b>Chhoti position ok.</b> ATM ${atm} CE @ ₹${ce_ltp.toFixed(2)}. Stop: 40% loss.`;
+    } else if (emaBull2 && pcr > 1.1) {
+      finalAdvice = `🟡 <b>CE POSSIBLE lekin risky — IV ${ce_iv.toFixed(0)}%</b><br>7-din: EMA BULL + PCR ${pcr.toFixed(2)}>1.1 = 60% win. Risky zone hai. <b>Half position only.</b> Tight stop: 35% loss.`;
+    } else if (emaBear2 && pcr < 0.85) {
+      finalAdvice = `🔴 <b>AVOID PE BUY — IV ${ce_iv.toFixed(0)}% risky + EMA BEAR + PCR ${pcr.toFixed(2)}<0.85</b><br>7-din: Sirf 38% PE win in this condition. Dono side lose. WAIT karo.`;
+    } else {
+      finalAdvice = `⚠️ <b>RISKY ZONE — IV ${ce_iv.toFixed(0)}% (15-25%)</b><br>7-din: 53% avg win = coin flip. EMA/PCR mixed signal. Buying avoid karo. IV<15% ya PCR>1.15 ka wait karo.`;
+    }
+  } else if (ce_iv > 0 && ce_iv <= 15 && dte > 0) {
+    const ceRatioHint2 = peHeavy2 ? ` CE/PE=${cepeRatio.toFixed(3)} PE heavy = BOTTOM signal! ` : ceHeavy2 ? ` CE/PE=${cepeRatio.toFixed(3)} CE heavy = TOP near, wait for dip. ` : '';
+    if (emaBull2 && pcr > 1.0 && !ceHeavy2) {
+      finalAdvice = `✅ <b>BUY CE</b> — IV ${ce_iv.toFixed(0)}%<15 + EMA BULL + PCR ${pcr.toFixed(2)}>1.0${ceRatioHint2}<br>8-din: 83% win avg +69. ${atm} CE. Stop: 40% loss. Target: 2x.`;
+    } else if (emaBull2 && peHeavy2) {
+      finalAdvice = `✅ <b>BUY CE — STRONG</b> — IV ${ce_iv.toFixed(0)}%<15 + BULL + CE/PE=${cepeRatio.toFixed(3)} BOTTOM SIGNAL!<br>8-din: 83% win. PE heavy = bottom near. ${atm} CE kharido abhi. Stop: 40%.`;
+    } else if (emaBear2 && pcr < 1.0 && !peHeavy2) {
+      finalAdvice = `✅ <b>BUY PE</b> — IV ${ce_iv.toFixed(0)}%<15 + EMA BEAR + PCR ${pcr.toFixed(2)}<1.0${ceRatioHint2}<br>8-din: 83% win avg +69. ${atm} PE. Stop: 40% loss. Target: 2x.`;
+    } else if (emaBear2 && ceHeavy2) {
+      finalAdvice = `✅ <b>BUY PE — STRONG</b> — IV ${ce_iv.toFixed(0)}%<15 + BEAR + CE/PE=${cepeRatio.toFixed(3)} TOP SIGNAL!<br>8-din: 83% win. CE heavy = top near. ${atm} PE kharido abhi. Stop: 40%.`;
+    } else if (isSideways) {
+      const cheapSide = ceLtp2 < peLtp2 ? `CE ₹${ceLtp2.toFixed(1)} sasta` : `PE ₹${peLtp2.toFixed(1)} sasta`;
+      finalAdvice = `↔ <b>SIDEWAYS — IV SAFE</b> — IV ${ce_iv.toFixed(0)}%<15. RSI ${atmRSI2.toFixed(0)}, PCR ${pcr.toFixed(2)} neutral.<br>${cheapSide} kharido. Exit when ratio > 1.12 ya < 0.88.`;
+    } else {
+      finalAdvice = `🟡 <b>IV SAFE (<15%) — Signal wait karo</b><br>PCR ${pcr.toFixed(2)} ya EMA not aligned.${ceRatioHint2} Wait: BULL+PCR>1.0 (CE) ya BEAR+PCR<1.0 (PE).`;
+    }
   } else {
-    finalAdvice = `🟡 <b>Abhi wait karo.</b> Seller score ${sellerScore}/6 — IV ${ce_iv.toFixed(0)}%, Theta ${ce_theta.toFixed(0)}.<br>Buyer tab aana jab IV < 22% ho, EMA + PCR ek direction mein hon, aur Theta < 350 ho.`;
+    finalAdvice = `⚠️ <b>WAIT</b> — Mixed signals. IV ${ce_iv.toFixed(0)}%, PCR ${pcr.toFixed(2)}, EMA ${emaBias||'—'}<br>Clear direction nahi. Koi trade nahi.`;
   }
 
   // ═══ Render ═══
@@ -6475,7 +7659,9 @@ function runBuyerSellerAdvisor() {
 /* ══ OPTIONS BATTLEGROUND ENGINE ══════════════════════════ */
 window.navinPriceTracker = { ce: 0, pe: 0, spot: 0, spotPrev: 0 };
 window.navinLastPain = 0;
-window._spotHistory = [];  // last 10 spot prices for momentum
+window._spotHistory  = [];   // last 10 spot prices for momentum
+window._emaFlipLog  = [];   // EMA bias history for choppy detection
+window._emaFlipCount = 0;   // how many times EMA flipped today
 
 
 
@@ -6514,6 +7700,7 @@ async function loadNews() {
 
 function onChainLoaded() {
   updateOptionsBattle();
+  updateCePeRatioPanel();
   runBuyerSellerAdvisor();
   calcBuyingDanger();
   updateSentimentDash();
@@ -6526,6 +7713,19 @@ function onChainLoaded() {
   runAlerts();
   renderHeatmap();
 
+  // Update S/R levels for chart
+  if (chainData && chainData.length) {
+    const spot2 = chainData[0]?.underlying_spot_price || 0;
+    let maxCOI=0, maxPOI=0, res=0, sup=0;
+    chainData.forEach(d => {
+      const coi=d.call_options?.market_data?.oi||0, poi=d.put_options?.market_data?.oi||0;
+      if (Math.abs(d.strike_price-spot2)<=2000) {
+        if(coi>maxCOI){maxCOI=coi;res=d.strike_price;}
+        if(poi>maxPOI){maxPOI=poi;sup=d.strike_price;}
+      }
+    });
+    window._srLevels = { spot:spot2, resistance:res, support:sup, maxPain:calcMaxPain(chainData,spot2) };
+  }
   if (oiAutoSave) { saveOISnapshot(); saveCSVRow(); }
   populateCandleStrikes();
   buildStrategy(activeStrategy);
@@ -6587,9 +7787,13 @@ function calcBuyingDanger() {
   if (dte === 0) { dangerScore += 40; reasons.push({ text:'🔴 EXPIRY DAY — Theta kha raha hai. Buying avoid karo.', color:'#ff1a4a', weight:'critical' }); }
   else if (dte === 1) { dangerScore += 15; reasons.push({ text:'⚠️ Kal expiry — Theta fast chal raha hai.', color:'#ff6b00', weight:'medium' }); }
 
-  if (atmIV > 25)  { dangerScore += 20; reasons.push({ text:`🔴 IV ${atmIV.toFixed(1)}% > 25% — SELLER DAY. Buying avoid karo.`, color:'#ff3d6b', weight:'high' }); }
-  else if (atmIV > 18) { dangerScore += 10; reasons.push({ text:`🟠 IV ${atmIV.toFixed(1)}% (18-25%) — Risky zone.`, color:'#ff6b00', weight:'medium' }); }
-  else if (atmIV > 0)  { dangerScore -= 8;  reasons.push({ text:`🟢 IV ${atmIV.toFixed(1)}% < 18% — Buyer safe zone.`, color:'#00e5a0', weight:'positive' }); }
+  // 6-day CSV data thresholds
+  // 8-day data thresholds (867 rows)
+  if (atmIV > 35)       { dangerScore += 40; reasons.push({ text:`🔴 IV ${atmIV.toFixed(1)}%>35 — STRONG SELLER (61% win). Short straddle.`, color:'#ff1a4a', weight:'critical' }); }
+  else if (atmIV > 25)  { dangerScore += 30; reasons.push({ text:`🔴 IV ${atmIV.toFixed(1)}%>25 — SELLER DAY. SELL PE 82% win! CE/PE buyers 41%.`, color:'#ff3d6b', weight:'high' }); }
+  else if (atmIV > 18)  { dangerScore += 12; reasons.push({ text:`⚠️ IV ${atmIV.toFixed(1)}% RISKY (18-25%). CE 53% marginal. PCR>1.15+BULL needed.`, color:'#ff6b00', weight:'medium' }); }
+  else if (atmIV > 15)  { dangerScore += 20; reasons.push({ text:`🔴 IV ${atmIV.toFixed(1)}% VERY RISKY (15-18%). CE 44% — WORSE than 18-25%!`, color:'#ff4400', weight:'high' }); }
+  else if (atmIV > 0)   { dangerScore -= 18; reasons.push({ text:`✅ IV ${atmIV.toFixed(1)}%<15 — BUY ZONE! 8-day: 83% win avg +69.`, color:'#00e5a0', weight:'positive' }); }
 
   let totalCallOI = 0, totalPutOI = 0;
   chainData.forEach(d => { totalCallOI += d.call_options?.market_data?.oi||0; totalPutOI += d.put_options?.market_data?.oi||0; });
@@ -6725,9 +7929,12 @@ function renderEmaChart() {
   const candles = emaAllCandles;
   if (!candles.length) return;
   const total    = candles.length;
-  const viewEnd  = Math.max(EMA_VIEW_BARS, total - emaViewOffset);
-  const viewStart= Math.max(0, viewEnd - EMA_VIEW_BARS);
+  // When total < EMA_VIEW_BARS, auto-fit to show all candles
+  const effectiveBars = Math.min(EMA_VIEW_BARS, total);
+  const viewEnd  = Math.min(total, total - emaViewOffset);
+  const viewStart= Math.max(0, viewEnd - effectiveBars);
   const view     = candles.slice(viewStart, viewEnd);
+  const viewLen  = view.length;
   const labels   = view.map(c => fmtCandleLabel(c[0], currentTf));
   const { datasets, signalsCE, signalsPE, emaCloseFull, emaOpenFull } = buildIndicatorDatasets(candles, viewStart, viewEnd);
 
@@ -6764,13 +7971,48 @@ function renderEmaChart() {
   }
   if (signalBox) signalBox.innerHTML = lastSigText + 'EMA: ' + emaBiasNow + oiBiasHtml;
 
+  // Update chart legend
+  const stratState = window._stratState || { ema: true, csv: false };
+  const legendBuyCE = document.getElementById('legendBuyCE');
+  const legendBuyPE = document.getElementById('legendBuyPE');
+  const legendSellCE = document.getElementById('legendSellCE');
+  const legendSellPE = document.getElementById('legendSellPE');
+  if (legendBuyCE) legendBuyCE.style.display = stratState.ema ? 'inline' : 'none';
+  if (legendBuyPE) legendBuyPE.style.display = stratState.ema ? 'inline' : 'none';
+  if (legendSellCE) legendSellCE.style.display = stratState.csv ? 'inline' : 'none';
+  if (legendSellPE) legendSellPE.style.display = stratState.csv ? 'inline' : 'none';
+
+  // Generate CSV sell signals
+  window._csvSellSignals = [];
+  if (stratState.csv && chainData && chainData.length) {
+    const spot = chainData[0]?.underlying_spot_price || 0;
+    const step = INSTRUMENTS[document.getElementById('symbolSel')?.value]?.step || 50;
+    const atm = Math.round(spot / step) * step;
+    const atmRow = chainData.find(d => d.strike_price === atm);
+    const ce_iv = atmRow?.call_options?.option_greeks?.iv || 0;
+    const dte = getDaysToExpiry(document.getElementById('expirySel')?.value || '');
+    const emaBias = document.getElementById('sentTrendVal')?.textContent || 'NEUTRAL';
+    const pcr = window._livePCR || 1;
+    
+    if (ce_iv > 25 || dte === 0) {
+      if (emaBias.includes('BULLISH') || pcr > 1.1) {
+        window._csvSellSignals.push({ type: 'SELL_PE', idx: candles.length - 1 });
+      }
+      if (emaBias.includes('BEARISH') || pcr < 0.85) {
+        window._csvSellSignals.push({ type: 'SELL_CE', idx: candles.length - 1 });
+      }
+    }
+  }
+
   window._candleView = view;
+  window._emaViewOffset = viewStart;
   const canvas = document.getElementById('candleCanvas');
   if (!canvas) return;
 
   if (candleChart) { candleChart.destroy(); candleChart = null; }
   if (window.ChartDataLabels) Chart.register(ChartDataLabels);
   Chart.register(candleDrawPlugin);
+  Chart.register(tradingViewCrosshairPlugin);
 
   candleChart = new Chart(canvas.getContext('2d'), {
     data: { labels, datasets },
@@ -6781,26 +8023,116 @@ function renderEmaChart() {
       plugins: {
         datalabels: { display: false },
         legend: { display: false },
+        annotation: {
+          annotations: (() => {
+            const ann = {};
+            if (!chainData || !chainData.length) return ann;
+            const liveSpot3 = chainData[0]?.underlying_spot_price || 0;
+            const maxPain3  = calcMaxPain(chainData, liveSpot3);
+            const instrKey3 = document.getElementById('symbolSel')?.value || '';
+            const step3     = INSTRUMENTS[instrKey3]?.step || 50;
+            let mCOI=0, mPOI=0, res3=0, sup3=0;
+            chainData.forEach(d => {
+              if (Math.abs(d.strike_price - liveSpot3) > 2000) return;
+              const coi = d.call_options?.market_data?.oi || 0;
+              const poi = d.put_options?.market_data?.oi  || 0;
+              if (coi > mCOI) { mCOI = coi; res3 = d.strike_price; }
+              if (poi > mPOI) { mPOI = poi; sup3 = d.strike_price; }
+            });
+            if (res3) ann.ema_res = { type:'line', scaleID:'y', value:res3,
+              borderColor:'rgba(255,61,107,.55)', borderWidth:1.2, borderDash:[5,3],
+              label:{ content:'⛔ R '+res3, enabled:true, position:'start',
+                color:'#ff3d6b', backgroundColor:'rgba(255,61,107,.1)',
+                font:{family:'Space Mono',size:9} } };
+            if (sup3) ann.ema_sup = { type:'line', scaleID:'y', value:sup3,
+              borderColor:'rgba(0,229,160,.55)', borderWidth:1.2, borderDash:[5,3],
+              label:{ content:'🛡 S '+sup3, enabled:true, position:'start',
+                color:'#00e5a0', backgroundColor:'rgba(0,229,160,.1)',
+                font:{family:'Space Mono',size:9} } };
+            if (maxPain3) ann.ema_mp = { type:'line', scaleID:'y', value:maxPain3,
+              borderColor:'rgba(255,208,0,.7)', borderWidth:1.8, borderDash:[7,4],
+              label:{ content:'🎯 MaxPain '+maxPain3, enabled:true, position:'end',
+                color:'#ffd000', backgroundColor:'rgba(255,208,0,.12)',
+                font:{family:'Space Mono',size:9,weight:'bold'} } };
+            // Spot line
+            if (liveSpot3) ann.ema_spot = { type:'line', scaleID:'y', value:liveSpot3,
+              borderColor:'rgba(0,201,255,.6)', borderWidth:1.5,
+              label:{ content:'SPOT '+liveSpot3.toFixed(0), enabled:true, position:'end',
+                color:'#00c9ff', backgroundColor:'rgba(0,201,255,.12)',
+                font:{family:'Space Mono',size:9,weight:'bold'} } };
+            // TP1, TP2, SL from ATM CE LTP
+            const atmRow4 = chainData.find(d => d.strike_price === Math.round(liveSpot3/step3)*step3);
+            const atmCeLtp4 = atmRow4?.call_options?.market_data?.ltp || 0;
+            if (atmCeLtp4 > 0 && liveSpot3 > 5000) {
+              const sl4  = liveSpot3 - atmCeLtp4;
+              const tp1_4= liveSpot3 + atmCeLtp4 * 1.5;
+              const tp2_4= liveSpot3 + atmCeLtp4 * 3.0;
+              const minSpread4 = liveSpot3 * 0.002;
+              if (Math.abs(tp1_4 - liveSpot3) > minSpread4) {
+                ann.ema_sl  = { type:'line', scaleID:'y', value:sl4,
+                  borderColor:'rgba(255,30,60,.45)', borderWidth:1, borderDash:[3,5],
+                  label:{ content:'SL '+sl4.toFixed(0), enabled:true, position:'end',
+                    color:'#ff1a4a', backgroundColor:'rgba(0,0,0,.7)', font:{family:'Space Mono',size:8} } };
+                ann.ema_tp1 = { type:'line', scaleID:'y', value:tp1_4,
+                  borderColor:'rgba(0,229,160,.45)', borderWidth:1, borderDash:[3,5],
+                  label:{ content:'TP1 '+tp1_4.toFixed(0), enabled:true, position:'end',
+                    color:'#00c896', backgroundColor:'rgba(0,0,0,.7)', font:{family:'Space Mono',size:8} } };
+                ann.ema_tp2 = { type:'line', scaleID:'y', value:tp2_4,
+                  borderColor:'rgba(0,255,136,.5)', borderWidth:1.5, borderDash:[4,4],
+                  label:{ content:'TP2 '+tp2_4.toFixed(0), enabled:true, position:'end',
+                    color:'#00ff88', backgroundColor:'rgba(0,0,0,.7)', font:{family:'Space Mono',size:8} } };
+              }
+            }
+            return ann;
+          })(),
+        },
         zoom: {
-          pan:  { enabled:true, mode:'x' },
-          zoom: { wheel:{ enabled:true }, pinch:{ enabled:true }, mode:'x' },
+          pan:  { 
+            enabled: true, mode: 'xy',
+            onPan({ chart }) {
+              const total = emaAllCandles.length;
+              const visLen = Math.round(chart.scales.x.max - chart.scales.x.min);
+              const effectiveBars = Math.min(EMA_VIEW_BARS, total);
+              const maxOffset = Math.max(0, total - effectiveBars);
+              const newOffset = Math.round(chart.scales.x.min);
+              emaViewOffset = Math.min(Math.max(0, newOffset), maxOffset);
+            }
+          },
+          zoom: { 
+            wheel:{ enabled:true, speed:0.05 },
+            pinch:{ enabled:true },
+            mode:'xy',
+            onZoom({ chart }) {
+              const visLen = Math.round(chart.scales.x.max - chart.scales.x.min);
+              const total = emaAllCandles.length;
+              if (visLen >= 10 && visLen <= total) {
+                EMA_VIEW_BARS = visLen;
+              }
+            }
+          },
         },
         crosshair: {},
       },
       scales: {
         x:  { display:true, ticks:{ color:'var(--muted)', font:{family:'Space Mono',size:9}, maxTicksLimit:8 }, grid:{ color:'rgba(255,255,255,.04)' } },
         x2: { display:false, type:'linear', min:0, max:view.length-1 },
-        y:  { display:true, position:'right', ticks:{ color:'var(--muted)', font:{family:'Space Mono',size:9} }, grid:{ color:'rgba(255,255,255,.04)' } },
+        y:  { 
+          display:true, position:'right', 
+          ticks:{ color:'var(--muted)', font:{family:'Space Mono',size:9}, alignment:'start', padding:12, maxRotation:0 }, 
+          grid:{ color:'rgba(255,255,255,.04)' },
+          suggestedMin: (() => { const m=Math.min(...view.map(c=>Math.min(c[2],c[3]))); const r=m*0.005; return m-r; })(),
+          suggestedMax: (() => { const m=Math.max(...view.map(c=>Math.max(c[2],c[3]))); const r=m*0.005; return m+r; })(),
+        },
       },
       onHover: (e, els, chart) => {
         const x = e.native?.offsetX, y = e.native?.offsetY;
         const ca = chart.chartArea;
-        if (!ca || x<ca.left||x>ca.right||y<ca.top||y>ca.bottom) { document.getElementById('ohlcDisplay').innerHTML=''; return; }
+        if (!ca || x<ca.left||x>ca.right||y<ca.top||y>ca.bottom) { const od=document.getElementById('ohlcBar'); if(od) od.innerHTML=''; return; }
         const xi = chart.scales.x.getValueForPixel(x);
         const idx2 = Math.max(0, Math.min(view.length-1, Math.round(xi)));
         const c = view[idx2];
         if (!c) return;
-        document.getElementById('ohlcDisplay').innerHTML =
+        const _od = document.getElementById('ohlcBar'); if(_od) _od.innerHTML =
           'O:<span style="color:var(--text)"> '+c[1].toFixed(1)+'</span>  '+
           'H:<span style="color:#00e5a0"> '+c[2].toFixed(1)+'</span>  '+
           'L:<span style="color:#ff3d6b"> '+c[3].toFixed(1)+'</span>  '+
@@ -6816,11 +8148,383 @@ function renderEmaChart() {
   const btWarn = document.getElementById('btApiWarn');
   if (btWarn) btWarn.textContent = '';
 
+  // Keyboard arrow key pan
+  const chartWrap = document.getElementById('emaChartWrap');
+  const panHint = document.getElementById('chartPanHint');
+  if (chartWrap) {
+    chartWrap.setAttribute('tabindex', '0');
+    chartWrap.style.outline = 'none';
+    chartWrap.onkeydown = (e) => {
+      if (!emaAllCandles.length) return;
+      const t = emaAllCandles.length;
+      const eb = Math.min(EMA_VIEW_BARS, t);
+      const maxOff = Math.max(0, t - eb);
+      const step = Math.max(1, Math.round(eb * 0.1));
+      if (e.key === 'ArrowLeft') {
+        emaViewOffset = Math.min(maxOff, emaViewOffset + step);
+        renderEmaChart();
+      } else if (e.key === 'ArrowRight') {
+        emaViewOffset = Math.max(0, emaViewOffset - step);
+        renderEmaChart();
+      } else if (e.key === 'Home') {
+        emaViewOffset = 0;
+        renderEmaChart();
+      } else if (e.key === 'End') {
+        emaViewOffset = maxOff;
+        renderEmaChart();
+      }
+    };
+    chartWrap.onfocus = () => { if (panHint) panHint.style.display = 'block'; };
+    chartWrap.onblur = () => { if (panHint) panHint.style.display = 'none'; };
+  }
+  // Show pan hint if data can be panned
+  if (panHint) {
+    const t = emaAllCandles.length;
+    const eb = Math.min(EMA_VIEW_BARS, t);
+    const maxOff = Math.max(0, t - eb);
+    panHint.style.display = maxOff > 0 ? 'block' : 'none';
+  }
+
+  // Init drawing canvas + mobile touch
+  setTimeout(() => { initDrawingCanvas(); redrawDrawings(); initMobileTouch(); }, 100);
+
   // Start live tick
   if (liveTickTimer) clearInterval(liveTickTimer);
   liveTickTimer = setInterval(updateLiveCandle, 3000);
 }
 
+
+/* ══════════════════════════════════════════════════════
+   DRAWING TOOLS ENGINE
+   Cross cursor, H-Line, Trend Line, Arrow, Dot, Eraser
+══════════════════════════════════════════════════════ */
+let activeDrawTool = 'cross';
+let drawings = [];          // { type, points, color, price }
+let drawingInProgress = null;
+let isDrawing = false;
+
+function setDrawTool(tool) {
+  activeDrawTool = tool;
+  document.querySelectorAll('.draw-tool-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('tool_' + tool);
+  if (btn) btn.classList.add('active');
+  
+  const canvas = document.getElementById('drawingCanvas');
+  if (!canvas) return;
+  
+  const tips = {
+    cross:  'Crosshair cursor — hover karo price dekhne ke liye',
+    hline:  'Click karo — horizontal support/resistance line draw hogi',
+    tline:  'Click start → Click end — trend line draw karo',
+    arrow:  'Click start → Click end — arrow draw karo',
+    dot:    'Click karo — dot mark karo (entry/exit point)',
+    eraser: 'Drawing ke upar click karo — delete karo',
+  };
+  const tip = document.getElementById('drawTooltip');
+  if (tip) tip.textContent = tips[tool] || '';
+  
+  if (tool === 'cross') {
+    canvas.classList.remove('draw-active','draw-eraser','draw-arrow');
+    canvas.style.pointerEvents = 'none';
+  } else if (tool === 'eraser') {
+    canvas.classList.remove('draw-active','draw-arrow');
+    canvas.classList.add('draw-active','draw-eraser');
+    canvas.style.pointerEvents = 'all';
+  } else {
+    canvas.classList.remove('draw-eraser','draw-arrow');
+    canvas.classList.add('draw-active');
+    if (tool === 'arrow') canvas.classList.add('draw-arrow');
+    canvas.style.pointerEvents = 'all';
+  }
+}
+
+function getChartPixelFromPrice(chart, price) {
+  return chart ? chart.scales.y.getPixelForValue(price) : 0;
+}
+function getPriceFromPixel(chart, py) {
+  return chart ? chart.scales.y.getValueForPixel(py) : 0;
+}
+function getBarIndexFromPixel(chart, px) {
+  if (!chart) return 0;
+  return Math.round(chart.scales.x.getValueForPixel(px));
+}
+
+function initDrawingCanvas() {
+  const canvas = document.getElementById('drawingCanvas');
+  if (!canvas) return;
+  
+  // Sync size with chart canvas
+  const cc = document.getElementById('candleCanvas');
+  if (cc) {
+    canvas.width  = cc.offsetWidth;
+    canvas.height = cc.offsetHeight;
+    canvas.style.width  = cc.offsetWidth  + 'px';
+    canvas.style.height = cc.offsetHeight + 'px';
+  }
+  
+  canvas.addEventListener('mousedown', onDrawStart);
+  canvas.addEventListener('mousemove', onDrawMove);
+  canvas.addEventListener('mouseup',   onDrawEnd);
+  canvas.addEventListener('mouseleave',onDrawEnd);
+  
+  // Touch support
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); const t=e.touches[0]; onDrawStart({offsetX:t.clientX-canvas.getBoundingClientRect().left, offsetY:t.clientY-canvas.getBoundingClientRect().top}); }, {passive:false});
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); const t=e.touches[0]; onDrawMove({offsetX:t.clientX-canvas.getBoundingClientRect().left, offsetY:t.clientY-canvas.getBoundingClientRect().top}); }, {passive:false});
+  canvas.addEventListener('touchend',   e => { e.preventDefault(); onDrawEnd({}); }, {passive:false});
+}
+
+function onDrawStart(e) {
+  if (!candleChart) return;
+  const px = e.offsetX, py = e.offsetY;
+  const price = getPriceFromPixel(candleChart, py);
+  const barIdx = getBarIndexFromPixel(candleChart, px);
+  
+  if (activeDrawTool === 'eraser') {
+    // Find and remove nearest drawing
+    const thresh = 15;
+    drawings = drawings.filter(d => {
+      if (d.type === 'hline') {
+        const dp = getChartPixelFromPrice(candleChart, d.price);
+        return Math.abs(dp - py) > thresh;
+      }
+      if (d.type === 'dot') {
+        const dp = getChartPixelFromPrice(candleChart, d.price);
+        const xp = candleChart.scales.x.getPixelForValue(d.barIdx);
+        return Math.abs(dp-py)>thresh || Math.abs(xp-px)>thresh;
+      }
+      // tline/arrow: check proximity to either endpoint
+      if (d.points) {
+        const [p1,p2] = d.points;
+        const x1=candleChart.scales.x.getPixelForValue(p1.x);
+        const y1=candleChart.scales.y.getPixelForValue(p1.y);
+        const x2=candleChart.scales.x.getPixelForValue(p2?.x||p1.x);
+        const y2=candleChart.scales.y.getPixelForValue(p2?.y||p1.y);
+        const d1=Math.sqrt((px-x1)**2+(py-y1)**2);
+        const d2=Math.sqrt((px-x2)**2+(py-y2)**2);
+        return d1>thresh && d2>thresh;
+      }
+      return true;
+    });
+    redrawDrawings();
+    return;
+  }
+  
+  if (activeDrawTool === 'dot') {
+    drawings.push({ type:'dot', price, barIdx, color:'#ffd000' });
+    redrawDrawings();
+    return;
+  }
+  
+  if (activeDrawTool === 'hline') {
+    drawings.push({ type:'hline', price, color:'#00c9ff' });
+    redrawDrawings();
+    return;
+  }
+  
+  // tline or arrow: start drawing
+  isDrawing = true;
+  drawingInProgress = { type:activeDrawTool, points:[{x:barIdx, y:price}], color: activeDrawTool==='arrow'?'#ff9f40':'#a78bfa', px1:px, py1:py, px2:px, py2:py };
+}
+
+function onDrawMove(e) {
+  if (!candleChart) return;
+  
+  // Always redraw to show live crosshair (even without drawing)
+  redrawDrawings(e.offsetX, e.offsetY);
+  
+  if (!isDrawing || !drawingInProgress) return;
+  
+  const price = getPriceFromPixel(candleChart, e.offsetY);
+  const barIdx = getBarIndexFromPixel(candleChart, e.offsetX);
+  drawingInProgress.px2 = e.offsetX;
+  drawingInProgress.py2 = e.offsetY;
+  if (drawingInProgress.points.length < 2) {
+    drawingInProgress.points.push({x:barIdx, y:price});
+  } else {
+    drawingInProgress.points[1] = {x:barIdx, y:price};
+  }
+}
+
+function onDrawEnd(e) {
+  if (isDrawing && drawingInProgress) {
+    if (drawingInProgress.points.length >= 2 && 
+        (drawingInProgress.px1 !== drawingInProgress.px2 || drawingInProgress.py1 !== drawingInProgress.py2)) {
+      drawings.push({...drawingInProgress});
+    }
+    drawingInProgress = null;
+    isDrawing = false;
+    redrawDrawings();
+  }
+}
+
+function redrawDrawings(mouseX, mouseY) {
+  const canvas = document.getElementById('drawingCanvas');
+  if (!canvas || !candleChart) return;
+  const ctx = canvas.getContext('2d');
+  const { left, right, top, bottom, width: cw, height: ch } = candleChart.chartArea;
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // ── Draw crosshair (always, when mouse in chart area) ──
+  if (mouseX !== undefined && mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom) {
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    // Vertical line
+    ctx.beginPath(); ctx.moveTo(mouseX, top); ctx.lineTo(mouseX, bottom); ctx.stroke();
+    // Horizontal line
+    ctx.beginPath(); ctx.moveTo(left, mouseY); ctx.lineTo(right, mouseY); ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Price label on right
+    const price = getPriceFromPixel(candleChart, mouseY);
+    if (price) {
+      const txt = price.toFixed(1);
+      const tw = ctx.measureText(txt).width;
+      ctx.fillStyle = '#00c9ff';
+      ctx.fillRect(right + 2, mouseY - 9, tw + 8, 18);
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 9px "Space Mono"';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(txt, right + 6, mouseY);
+    }
+    
+    // Bar label on bottom
+    const bi = getBarIndexFromPixel(candleChart, mouseX);
+    const label = candleChart.data.labels[bi] || '';
+    if (label) {
+      const tw2 = ctx.measureText(label).width;
+      ctx.fillStyle = '#1e3050';
+      ctx.fillRect(mouseX - tw2/2 - 4, bottom + 2, tw2 + 8, 16);
+      ctx.fillStyle = '#fff';
+      ctx.font = '9px "Space Mono"';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, mouseX, bottom + 10);
+    }
+    ctx.restore();
+  }
+  
+  // ── Draw all saved drawings ──
+  drawings.forEach(d => drawOne(ctx, d));
+  
+  // ── Draw in-progress line ──
+  if (drawingInProgress && isDrawing) {
+    drawOne(ctx, {...drawingInProgress, inProgress:true});
+  }
+}
+
+function drawOne(ctx, d) {
+  if (!candleChart) return;
+  const { left, right, top, bottom } = candleChart.chartArea;
+  ctx.save();
+  
+  if (d.type === 'hline') {
+    const py = getChartPixelFromPrice(candleChart, d.price);
+    if (py < top || py > bottom) { ctx.restore(); return; }
+    ctx.strokeStyle = d.color || '#00c9ff';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 3]);
+    ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke();
+    ctx.setLineDash([]);
+    // Price label
+    ctx.fillStyle = d.color || '#00c9ff';
+    ctx.font = 'bold 9px "Space Mono"';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(d.price.toFixed(1), right + 4, py);
+  }
+  
+  else if (d.type === 'dot') {
+    const py = getChartPixelFromPrice(candleChart, d.price);
+    const px = candleChart.scales.x.getPixelForValue(d.barIdx);
+    if (py < top || py > bottom) { ctx.restore(); return; }
+    ctx.fillStyle = d.color || '#ffd000';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 9px "Space Mono"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('●', px, py);
+  }
+  
+  else if (d.type === 'tline' || d.type === 'arrow') {
+    if (!d.points || d.points.length < 2) { ctx.restore(); return; }
+    const [p1, p2] = d.points;
+    const x1 = candleChart.scales.x.getPixelForValue(p1.x);
+    const y1 = candleChart.scales.y.getPixelForValue(p1.y);
+    const x2 = candleChart.scales.x.getPixelForValue(p2.x);
+    const y2 = candleChart.scales.y.getPixelForValue(p2.y);
+    
+    ctx.strokeStyle = d.color || '#a78bfa';
+    ctx.lineWidth = d.inProgress ? 1.5 : 2;
+    if (d.inProgress) ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Arrow head
+    if (d.type === 'arrow') {
+      const angle = Math.atan2(y2-y1, x2-x1);
+      const aLen = 12;
+      ctx.fillStyle = d.color || '#ff9f40';
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - aLen*Math.cos(angle-0.4), y2 - aLen*Math.sin(angle-0.4));
+      ctx.lineTo(x2 - aLen*Math.cos(angle+0.4), y2 - aLen*Math.sin(angle+0.4));
+      ctx.closePath(); ctx.fill();
+    }
+    
+    // Start/end dots
+    ctx.fillStyle = d.color || '#a78bfa';
+    ctx.beginPath(); ctx.arc(x1,y1,3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x2,y2,3,0,Math.PI*2); ctx.fill();
+  }
+  
+  ctx.restore();
+}
+
+function clearAllDrawings() {
+  drawings = [];
+  drawingInProgress = null;
+  isDrawing = false;
+  redrawDrawings();
+}
+
+let tooltipOnPress = true;
+
+function closeCursorMenu() {
+  const m = document.getElementById('cursorMenu');
+  if (m) m.style.display = 'none';
+}
+function selectCursor(mode, icon, label) {
+  document.querySelectorAll('.cursor-menu-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('cmenu_' + mode);
+  if (el) el.classList.add('active');
+  document.getElementById('cursorIcon').textContent  = icon;
+  document.getElementById('cursorLabel').textContent = label;
+  closeCursorMenu();
+  setDrawTool(mode);
+}
+function toggleTooltipOnPress() {
+  tooltipOnPress = !tooltipOnPress;
+  const tog = document.getElementById('tooltipToggle');
+  if (tog) {
+    tog.style.background = tooltipOnPress ? 'var(--accent)' : 'var(--border2)';
+    const thumb = tog.querySelector('div');
+    if (thumb) { thumb.style.right = tooltipOnPress ? '3px' : 'auto'; thumb.style.left = tooltipOnPress ? 'auto' : '3px'; }
+  }
+}
+// Close menu on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('#cursorModeBtn') && !e.target.closest('#cursorMenu')) {
+    closeCursorMenu();
+  }
+});
 
 /* ══ RESTORED MISSING FUNCTIONS ══════════════════════ */
 
@@ -6941,7 +8645,132 @@ function resetEmaChart() {
 
 function scrollEmaChart(dir) {
   const maxOffset = Math.max(0, emaAllCandles.length - EMA_VIEW_BARS);
-  emaViewOffset = Math.max(0, Math.min(maxOffset, emaViewOffset + Math.round(EMA_VIEW_BARS * dir)));
+  const step = Math.max(1, Math.round(EMA_VIEW_BARS * Math.abs(dir)));
+  if (dir < 0) {
+    // ◀ LEFT button = show OLDER candles (scroll back in time)
+    emaViewOffset = Math.min(maxOffset, emaViewOffset + step);
+  } else {
+    // ▶ RIGHT button = show NEWER candles (scroll forward in time)
+    emaViewOffset = Math.max(0, emaViewOffset - step);
+  }
+  if (candleChart) { try { candleChart.resetZoom(); } catch(e) {} }
+  renderEmaChart();
+}
+
+/* ══ MOBILE TOUCH HANDLER ══════════════════════════ */
+let _touchState = { fingers:0, lastDist:0, lastX:0, startX:0, isDragging:false, _rafPending:false };
+
+function initMobileTouch() {
+  const canvas = document.getElementById('candleCanvas');
+  if (!canvas) return;
+
+  // Store initial Y scale range for vertical zoom
+  let initialYMin = null;
+  let initialYMax = null;
+
+  canvas.addEventListener('touchstart', (e) => {
+    _touchState.fingers = e.touches.length;
+    if (e.touches.length === 1) {
+      // Single finger: start drag
+      _touchState.startX    = e.touches[0].clientX;
+      _touchState.lastX     = e.touches[0].clientX;
+      _touchState.isDragging = true;
+    } else if (e.touches.length === 2) {
+      // Two fingers: start pinch - store initial Y scale
+      _touchState.isDragging = false;
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      _touchState.lastDist = Math.sqrt(dx*dx + dy*dy);
+      _touchState.lastDY = dy;
+      // Store initial Y scale for vertical zoom calculation
+      if (candleChart && candleChart.scales.y) {
+        initialYMin = candleChart.scales.y.min;
+        initialYMax = candleChart.scales.y.max;
+      }
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (!emaAllCandles.length) return;
+
+    if (e.touches.length === 2) {
+      // ── PINCH ZOOM (Horizontal + Vertical) ──
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const scale = dist / (_touchState.lastDist || dist);
+      _touchState.lastDist = dist;
+
+      if (scale !== 1) {
+        const total = emaAllCandles.length;
+        // Horizontal zoom
+        let newBars = Math.round(EMA_VIEW_BARS / scale);
+        // Don't allow zooming out beyond total candles when total < default
+        const minBars = Math.min(10, total);
+        const maxBars = Math.max(total, 300);
+        EMA_VIEW_BARS = Math.max(minBars, Math.min(maxBars, newBars));
+        // Keep offset valid
+        const effectiveBars = Math.min(EMA_VIEW_BARS, total);
+        const maxOff = Math.max(0, total - effectiveBars);
+        emaViewOffset = Math.min(emaViewOffset, maxOff);
+        
+        // Vertical zoom - adjust Y scale based on pinch
+        if (candleChart && initialYMin !== null && initialYMax !== null) {
+          const midY = (initialYMin + initialYMax) / 2;
+          const rangeY = initialYMax - initialYMin;
+          const newRangeY = rangeY / scale;
+          const yMin = midY - newRangeY / 2;
+          const yMax = midY + newRangeY / 2;
+          candleChart.options.scales.y.min = yMin;
+          candleChart.options.scales.y.max = yMax;
+        }
+        
+        if (candleChart) { try { candleChart.update('none'); } catch(er) {} }
+        if (!_touchState._rafPending) {
+          _touchState._rafPending = true;
+          requestAnimationFrame(() => { _touchState._rafPending=false; renderEmaChart(); });
+        }
+      }
+
+    } else if (e.touches.length === 1 && _touchState.isDragging) {
+      // ── SINGLE FINGER DRAG (pan left/right) ──
+      const currX  = e.touches[0].clientX;
+      const deltaX = currX - _touchState.lastX;
+      _touchState.lastX = currX;
+
+      const canvas2 = document.getElementById('candleCanvas');
+      if (!canvas2) return;
+      const total = emaAllCandles.length;
+      const effectiveBars = Math.min(EMA_VIEW_BARS, total);
+      const pxPerBar = (canvas2.offsetWidth * 0.85) / effectiveBars;
+      const barsDelta = deltaX / pxPerBar;
+      const maxOff = Math.max(0, total - effectiveBars);
+
+      // drag RIGHT = show newer (offset decreases)
+      // drag LEFT  = show older (offset increases)
+      emaViewOffset = Math.max(0, Math.min(maxOff, emaViewOffset - barsDelta));
+      if (candleChart) { try { candleChart.resetZoom(); } catch(er) {} }
+      if (!_touchState._rafPending) {
+        _touchState._rafPending = true;
+        requestAnimationFrame(() => { _touchState._rafPending=false; renderEmaChart(); });
+      }
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', (e) => {
+    _touchState.isDragging = false;
+    _touchState.fingers    = e.touches.length;
+    initialYMin = null;
+    initialYMax = null;
+  }, { passive: false });
+}
+
+function resetChartView() {
+  EMA_VIEW_BARS = 80;
+  emaViewOffset = 0;
+  if (candleChart) { 
+    try { candleChart.resetZoom(); } catch(e) {} 
+  }
   renderEmaChart();
 }
 
@@ -6962,12 +8791,12 @@ function toggleChartFullscreen() {
 }
 
 function openIndicatorPanel() {
-  const panel = document.getElementById('indicatorPanel');
+  const panel = document.getElementById('indicatorModal') || document.getElementById('indicatorPanel');
   if (panel) panel.style.display = 'block';
 }
 
 function closeIndicatorModal(e) {
-  const panel = document.getElementById('indicatorPanel');
+  const panel = document.getElementById('indicatorModal') || document.getElementById('indicatorPanel');
   if (panel && (e.target === panel || e.currentTarget === panel)) panel.style.display = 'none';
 }
 
@@ -6990,7 +8819,14 @@ function selectStrategy(id) {
 
 function toggleStrategyVisible(id) {
   const strat = activeStrategies.find(s => s.id === id);
-  if (strat) { strat.visible = !strat.visible; renderEmaChart(); }
+  if (!strat) return;
+  strat.visible = !strat.visible;
+  // Update eye button icon
+  const eyeBtn  = document.getElementById('stratEye_' + id);
+  const card    = document.getElementById('stratCard_' + id);
+  if (eyeBtn)  eyeBtn.textContent  = strat.visible ? '👁' : '🚫';
+  if (card) card.style.opacity = strat.visible ? '1' : '0.45';
+  renderEmaChart();
 }
 
 function getRow(strike) {
@@ -7121,7 +8957,7 @@ async function onSymbolChange() {
     console.error('Expiry load error:', e);
     // Show error with retry button
     sel.innerHTML = '<option value="">-- Expiry load failed --</option>';
-    toast('⚠ Expiry load failed: ' + e.message + ' — Token sahi hai? Retry karo.', true);
+    toast('⚠ Expiry load failed: ' + e.message + ' — Token sahi hai? Network check karo. Retry karo.', true);
     // Show retry option
     const retryBtn = document.createElement('button');
     retryBtn.textContent = '↺ Retry Load Expiry';
@@ -7174,28 +9010,61 @@ async function fetchChain() {
 
 /* ══════════════════════════ API HELPER ══ */
 async function upstoxGet(url) {
+  const auth = `Bearer ${accessToken}`;
+  const hdrs = { Authorization: auth, Accept: 'application/json' };
+
   const proxies = [
+    // 1. Direct (works if CORS allowed or desktop app)
     async () => {
-      const r = await fetch(url, { headers:{ Authorization:`Bearer ${accessToken}`, Accept:'application/json' } });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const r = await fetch(url, { headers: hdrs });
+      if (!r.ok) throw new Error(`Direct HTTP ${r.status}`);
       return r.json();
     },
+    // 2. corsproxy.io — passes custom headers
     async () => {
-      const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { headers:{ Authorization:`Bearer ${accessToken}`, Accept:'application/json' } });
-      if (!r.ok) throw new Error(`Proxy HTTP ${r.status}`);
+      const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { headers: hdrs });
+      if (!r.ok) throw new Error(`corsproxy ${r.status}`);
       return r.json();
     },
+    // 3. cors-anywhere alternative
     async () => {
-      const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+      const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, { headers: hdrs });
+      if (!r.ok) throw new Error(`codetabs ${r.status}`);
+      return r.json();
+    },
+    // 4. thingproxy
+    async () => {
+      const r = await fetch(`https://thingproxy.freeboard.io/fetch/${url}`, { headers: hdrs });
+      if (!r.ok) throw new Error(`thingproxy ${r.status}`);
+      return r.json();
+    },
+    // 5. allorigins (no auth header — fallback only for public endpoints)
+    async () => {
+      // Build URL with token embedded as query param (Upstox v2 fallback)
+      const urlWithToken = url + (url.includes('?') ? '&' : '?') + `access_token=${encodeURIComponent(accessToken)}`;
+      const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlWithToken)}`);
       const w = await r.json();
-      return JSON.parse(w.contents);
-    }
+      if (!w?.contents) throw new Error('allorigins: no contents');
+      const parsed = JSON.parse(w.contents);
+      if (!parsed) throw new Error('allorigins: parse failed');
+      return parsed;
+    },
   ];
+
+  let lastErr;
   for (let i = 0; i < proxies.length; i++) {
     try {
-      return await Promise.race([proxies[i](), new Promise((_,rej) => setTimeout(()=>rej(new Error('Timeout')),10000))]);
-    } catch(e) { if (i === proxies.length - 1) throw e; }
+      const result = await Promise.race([
+        proxies[i](),
+        new Promise((_,rej) => setTimeout(() => rej(new Error(`Proxy ${i} timeout`)), 8000))
+      ]);
+      if (result) return result;
+    } catch(e) {
+      console.warn(`upstoxGet proxy ${i} failed:`, e.message);
+      lastErr = e;
+    }
   }
+  throw new Error(`Sab proxies fail ho gaye. Token valid hai? Error: ${lastErr?.message || 'unknown'}`);
 }
 
 /* ══════════════════════════ STATS ══ */
@@ -7604,7 +9473,7 @@ function toast(msg, isErr = false) {
     <button onclick="mobileScrollTo('ai')" style="background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">
       <span style="font-size:18px;">🧠</span>AI
     </button>
-    <button onclick="document.getElementById('refreshBtn').click()" style="background:var(--accent);border:none;color:#000;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 20px;border-radius:20px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:1px;">
+    <button onclick="fetchChain()" style="background:var(--accent);border:none;color:#000;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 20px;border-radius:20px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:1px;">
       <span style="font-size:16px;">⟳</span>REFRESH
     </button>
     <button onclick="mobileScrollTo('unusual')" style="background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">
