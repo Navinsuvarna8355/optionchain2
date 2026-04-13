@@ -71,6 +71,8 @@ body::after {
   border-top: 2px solid var(--accent);
   border-radius:10px; margin-bottom:14px;
   box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(0,201,255,.05);
+  position: relative;
+  z-index: 10;
 }
 .brand { display:flex; align-items:center; gap:14px; }
 .brand-icon {
@@ -96,14 +98,18 @@ body::after {
 
 /* ═══════════════ AUTH SCREEN ═══════════════ */
 #authScreen {
-  display:flex; align-items:center; justify-content:center;
+  display:flex !important; align-items:center; justify-content:center;
   min-height:70vh; flex-direction:column; gap:32px;
+  position: relative;
+  z-index: 500;
+  background: rgba(7,11,18,1);
 }
 .auth-card {
   background:var(--panel); border:1px solid var(--border);
   border-radius:16px; padding:36px 40px; width:100%; max-width:480px;
   box-shadow:0 20px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(0,201,255,.08);
-  animation:fadeUp .4s ease;
+  position: relative;
+  z-index: 600;
 }
 @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 .auth-title {
@@ -181,16 +187,18 @@ body::after {
 }
 .token-input-area:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,201,255,.1); }
 
-.tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--border); }
+.tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--border); position: relative; z-index: 10; }
 .tab {
   padding:10px 18px; font-family:var(--font-mono); font-size:11px;
   color:var(--muted); cursor:pointer; border-bottom:2px solid transparent;
   transition:all .2s; letter-spacing:1px; text-transform:uppercase;
   background:none; border-top:none; border-left:none; border-right:none;
+  position: relative;
+  z-index: 10;
 }
 .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
-.tab-panel { display:none; }
-.tab-panel.active { display:block; }
+.tab-panel { display:none; position: relative; z-index: 5; }
+.tab-panel.active { display:block; position: relative; z-index: 5; }
 
 /* ═══════════════ AI PANEL ═══════════════ */
 .ai-panel {
@@ -1444,17 +1452,17 @@ tr.atm-row td.strike-cell { color:var(--accent); }
   </div>
 </div>
 
-<div id="authScreen">
+<div id="authScreen" style="display:flex !important;visibility:visible !important;opacity:1 !important;">
   <div class="auth-card">
     <div class="auth-title">CONNECT UPSTOX</div>
     <div class="auth-sub">Link your Upstox Developer API to start fetching real-time option chain data with full Greeks, OI, and PCR.</div>
 
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('oauth')">OAuth Login</button>
-      <button class="tab" onclick="switchTab('token')">Direct Token</button>
+      <button class="tab active" onclick="console.log('OAuth tab clicked');switchTab('oauth')">OAuth Login</button>
+      <button class="tab" onclick="console.log('Token tab clicked');switchTab('token')">Direct Token</button>
     </div>
 
-    <div class="tab-panel active" id="tabOauth">
+    <div class="tab-panel active" id="tabOauth" style="position:relative;z-index:15;">
       <div class="field">
         <label>API Key (Client ID)</label>
         <input type="text" id="apiKey" placeholder="">
@@ -1480,7 +1488,7 @@ tr.atm-row td.strike-cell { color:var(--accent); }
     </div>
 
     <div class="tab-panel" id="tabToken">
-      <div class="field">
+      <div class="field" style="position:relative;z-index:15;">
         <label style="font-size:13px;color:var(--accent);font-weight:bold;">Upstox Access Token paste karo 👇</label>
         <textarea class="token-input-area" id="directToken" placeholder="eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOi... (Upstox se copy karo)"></textarea>
         <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:6px;">
@@ -1488,7 +1496,7 @@ tr.atm-row td.strike-cell { color:var(--accent); }
         </div>
       </div>
       <div class="btn-row">
-        <button class="btn btn-primary" onclick="loginWithToken()" style="width:100%;padding:14px;font-size:15px;letter-spacing:2px;margin-top:8px;">🚀 LOGIN → LOAD OPTION CHAIN</button>
+        <button class="btn btn-primary" onclick="loginWithToken()" style="width:100%;padding:14px;font-size:15px;letter-spacing:2px;margin-top:8px;position:relative;z-index:20;">🚀 LOGIN → LOAD OPTION CHAIN</button>
       </div>
       <div class="auth-steps">
         <div class="auth-steps-title">HOW TO GET TOKEN QUICKLY</div>
@@ -1514,7 +1522,7 @@ tr.atm-row td.strike-cell { color:var(--accent); }
   </div>
 </div>
 
-<div id="mainApp">
+<div id="mainApp" style="display:block;">
 
   <div class="ctrl-bar">
     <div class="ctrl-group">
@@ -3003,22 +3011,29 @@ function selectSymbol(key, label) {
 
 // Init search box with current value
 document.addEventListener('DOMContentLoaded', function() {
-  const cur = document.getElementById('symbolSel')?.value || 'NSE_INDEX|Nifty 50';
-  const lbl = INSTRUMENTS[cur]?.label || 'NIFTY 50';
-  const inp = document.getElementById('symbolSearch');
-  if (inp) inp.value = lbl;
+  try {
+    const cur = document.getElementById('symbolSel')?.value || 'NSE_INDEX|Nifty 50';
+    const lbl = INSTRUMENTS[cur]?.label || 'NIFTY 50';
+    const inp = document.getElementById('symbolSearch');
+    if (inp) inp.value = lbl;
 
-  // Auto-login if saved token exists
-  const savedToken = localStorage.getItem('upstox_token');
-  if (savedToken && savedToken.length > 10) {
-    initWithToken(savedToken);
-  } else {
-    // Show auth screen
-    document.getElementById('authScreen').style.display = 'flex';
-    document.getElementById('mainApp').style.display    = 'none';
-    // Pre-fill token field if partially saved
-    const tokenField = document.getElementById('directToken');
-    if (tokenField && savedToken) tokenField.value = savedToken;
+    // Auto-login if saved token exists
+    const savedToken = localStorage.getItem('upstox_token');
+    if (savedToken && savedToken.length > 10) {
+      initWithToken(savedToken);
+    } else {
+      // Show auth screen
+      const authScreen = document.getElementById('authScreen');
+      const mainApp = document.getElementById('mainApp');
+      if (authScreen) authScreen.style.display = 'flex';
+      if (mainApp) mainApp.style.display = 'none';
+      // Pre-fill token field if partially saved
+      const tokenField = document.getElementById('directToken');
+      if (tokenField && savedToken) tokenField.value = savedToken;
+    }
+    console.log('Page initialized successfully');
+  } catch (e) {
+    console.error('Initialization error:', e);
   }
 });
 
@@ -8194,8 +8209,7 @@ function renderEmaChart() {
   // Init drawing canvas + mobile touch
   setTimeout(() => { initDrawingCanvas(); redrawDrawings(); initMobileTouch(); initMouseDrag(); }, 100);
   
-  // Set cursor based on current mode
-  const canvas = document.getElementById('candleCanvas');
+  // Set cursor based on current mode (reuse canvas from above)
   if (canvas) canvas.style.cursor = window._chartCursorMode === 'drag' ? 'grab' : 'crosshair';
 
   // Start live tick
@@ -8858,13 +8872,12 @@ function toggleChartFullscreen() {
   const wrap = document.getElementById('emaChartWrap') || document.getElementById('candleCanvas')?.parentElement;
   if (!wrap) return;
   const isFs = wrap.classList.contains('chart-fullscreen');
+  const canvas = document.getElementById('candleCanvas');
   if (isFs) {
     wrap.classList.remove('chart-fullscreen');
-    const canvas = document.getElementById('candleCanvas');
     if (canvas) canvas.style.height = '360px';
   } else {
     wrap.classList.add('chart-fullscreen');
-    const canvas = document.getElementById('candleCanvas');
     if (canvas) canvas.style.height = (window.innerHeight - 120) + 'px';
   }
   setTimeout(() => { if (candleChart) { candleChart.resize(); } renderEmaChart(); }, 100);
@@ -8938,6 +8951,7 @@ function runBacktest() {
 }
 
 function switchTab(name) {
+  console.log('switchTab called with:', name);
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelector(`.tab:nth-child(${name==='oauth'?1:2})`).classList.add('active');
@@ -8977,6 +8991,7 @@ async function exchangeCode() {
 }
 
 function loginWithToken() {
+  console.log('loginWithToken called');
   const t = document.getElementById('directToken').value.trim();
   if (!t) return toast('Paste your access token', true);
   initWithToken(t);
@@ -8985,9 +9000,12 @@ function loginWithToken() {
 function initWithToken(token) {
   accessToken = token;
   localStorage.setItem('upstox_token', token);
-  document.getElementById('authScreen').style.display = 'none';
-  document.getElementById('mainApp').style.display    = 'block';
-  document.getElementById('logoutBtn').style.display  = 'flex';
+  const authScreen = document.getElementById('authScreen');
+  const mainApp = document.getElementById('mainApp');
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (authScreen) authScreen.style.display = 'none';
+  if (mainApp) mainApp.style.display = 'block';
+  if (logoutBtn) logoutBtn.style.display = 'flex';
   onSymbolChange();
   setTimeout(() => { if (typeof loadNews === 'function') loadNews(); }, 1000);
 }
@@ -8996,9 +9014,12 @@ function logout() {
   accessToken = '';
   localStorage.removeItem('upstox_token');
   chainData = [];
-  document.getElementById('mainApp').style.display    = 'none';
-  document.getElementById('authScreen').style.display = 'flex';
-  document.getElementById('logoutBtn').style.display  = 'none';
+  const mainApp = document.getElementById('mainApp');
+  const authScreen = document.getElementById('authScreen');
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (mainApp) mainApp.style.display = 'none';
+  if (authScreen) authScreen.style.display = 'flex';
+  if (logoutBtn) logoutBtn.style.display = 'none';
   if (autoTimer) clearInterval(autoTimer);
 }
 
