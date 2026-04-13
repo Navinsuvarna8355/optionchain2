@@ -98,7 +98,7 @@ body::after {
 
 /* ═══════════════ AUTH SCREEN ═══════════════ */
 #authScreen {
-  display:flex !important; align-items:center; justify-content:center;
+  display:flex; align-items:center; justify-content:center;
   min-height:70vh; flex-direction:column; gap:32px;
   position: relative;
   z-index: 500;
@@ -430,7 +430,8 @@ body::after {
 .ai-disclaimer span { color: var(--yellow); }
 
 /* ═══════════════ MAIN APP ═══════════════ */
-#mainApp { display:none; animation:fadeUp .4s ease; }
+#mainApp { display:none; animation:fadeUp .4s ease; visibility:hidden; opacity:0; }
+#mainApp.visible { display:block; visibility:visible; opacity:1; }
 
 .ctrl-bar {
   display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;
@@ -1452,7 +1453,7 @@ tr.atm-row td.strike-cell { color:var(--accent); }
   </div>
 </div>
 
-<div id="authScreen" style="display:flex !important;visibility:visible !important;opacity:1 !important;">
+<div id="authScreen">
   <div class="auth-card">
     <div class="auth-title">CONNECT UPSTOX</div>
     <div class="auth-sub">Link your Upstox Developer API to start fetching real-time option chain data with full Greeks, OI, and PCR.</div>
@@ -1522,7 +1523,7 @@ tr.atm-row td.strike-cell { color:var(--accent); }
   </div>
 </div>
 
-<div id="mainApp" style="display:block;">
+<div id="mainApp">
 
   <div class="ctrl-bar">
     <div class="ctrl-group">
@@ -3022,11 +3023,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (savedToken && savedToken.length > 10) {
       initWithToken(savedToken);
     } else {
-      // Show auth screen
+      // Show auth screen, hide main app
       const authScreen = document.getElementById('authScreen');
       const mainApp = document.getElementById('mainApp');
-      if (authScreen) authScreen.style.display = 'flex';
-      if (mainApp) mainApp.style.display = 'none';
+      if (authScreen) {
+        authScreen.style.display = 'flex';
+        authScreen.style.visibility = 'visible';
+      }
+      if (mainApp) {
+        mainApp.style.display = 'none';
+        mainApp.style.visibility = 'hidden';
+        mainApp.classList.remove('visible');
+      }
       // Pre-fill token field if partially saved
       const tokenField = document.getElementById('directToken');
       if (tokenField && savedToken) tokenField.value = savedToken;
@@ -8998,14 +9006,25 @@ function loginWithToken() {
 }
 
 function initWithToken(token) {
+  console.log('initWithToken called, token length:', token.length);
   accessToken = token;
   localStorage.setItem('upstox_token', token);
   const authScreen = document.getElementById('authScreen');
   const mainApp = document.getElementById('mainApp');
   const logoutBtn = document.getElementById('logoutBtn');
-  if (authScreen) authScreen.style.display = 'none';
-  if (mainApp) mainApp.style.display = 'block';
+  
+  // Force hide auth screen
+  if (authScreen) {
+    authScreen.style.display = 'none';
+    authScreen.style.visibility = 'hidden';
+  }
+  if (mainApp) {
+    mainApp.style.display = 'block';
+    mainApp.style.visibility = 'visible';
+    mainApp.classList.add('visible');
+  }
   if (logoutBtn) logoutBtn.style.display = 'flex';
+  
   onSymbolChange();
   setTimeout(() => { if (typeof loadNews === 'function') loadNews(); }, 1000);
 }
@@ -9017,8 +9036,15 @@ function logout() {
   const mainApp = document.getElementById('mainApp');
   const authScreen = document.getElementById('authScreen');
   const logoutBtn = document.getElementById('logoutBtn');
-  if (mainApp) mainApp.style.display = 'none';
-  if (authScreen) authScreen.style.display = 'flex';
+  if (mainApp) {
+    mainApp.style.display = 'none';
+    mainApp.style.visibility = 'hidden';
+    mainApp.classList.remove('visible');
+  }
+  if (authScreen) {
+    authScreen.style.display = 'flex';
+    authScreen.style.visibility = 'visible';
+  }
   if (logoutBtn) logoutBtn.style.display = 'none';
   if (autoTimer) clearInterval(autoTimer);
 }
