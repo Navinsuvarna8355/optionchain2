@@ -3692,15 +3692,15 @@ function renderChart(data, type = 'oi') {
       type:'line', scaleID:'y', value:supStrike,
       borderColor:'rgba(0,229,160,.7)', borderWidth:1.5, borderDash:[6,3],
       label:{ content:'S: '+supStrike, enabled:true, position:'start',
-        color:'#00e5a0', backgroundColor:'rgba(0,229,160,.15)',
-        font:{family:'Space Mono',size:9} }
+        color:'#00e5a0', backgroundColor:'rgba(0,0,0,.8)',
+        font:{family:'Space Mono',size:9,weight:'bold'}, borderRadius:3, padding:3 }
     };
     if (maxPainLevel) signalAnnotations['maxpain_line'] = {
       type:'line', scaleID:'y', value:maxPainLevel,
       borderColor:'rgba(255,208,0,.8)', borderWidth:2, borderDash:[8,4],
-      label:{ content:'MaxPain: '+maxPainLevel, enabled:true, position:'end',
-        color:'#ffd000', backgroundColor:'rgba(255,208,0,.15)',
-        font:{family:'Space Mono',size:9,weight:'bold'} }
+      label:{ content:'MaxPain: '+maxPainLevel, enabled:true, position:'start',
+        color:'#ffd000', backgroundColor:'rgba(0,0,0,.8)',
+        font:{family:'Space Mono',size:9,weight:'bold'}, borderRadius:3, padding:3 }
     };
     // ── TP1, TP2, SL based on last signal ──
     const lastCESig = (() => {
@@ -5398,6 +5398,8 @@ function setChartCursor(mode) {
       window.candleChart.options.plugins.zoom.zoom = { wheel:{ enabled:true }, pinch:{ enabled:true }, mode:'x' };
       window.candleChart.update();
     }
+    // Re-enable drawing tools based on current tool
+    setDrawTool(activeDrawTool);
   } else {
     if (canvas) canvas.style.cursor = 'grab';
     if (dragBtn) { dragBtn.style.background='rgba(0,201,255,.2)'; dragBtn.style.borderColor='rgba(0,201,255,.5)'; dragBtn.style.color='#00c9ff'; }
@@ -5407,6 +5409,10 @@ function setChartCursor(mode) {
       window.candleChart.options.plugins.zoom.zoom = { wheel:{ enabled:true, speed:0.05 }, pinch:{ enabled:true }, mode:'xy' };
       window.candleChart.update();
     }
+    // Enable mouse drag and disable drawing tools
+    _mouseDrag.active = false;
+    const drawCanvas = document.getElementById('drawingCanvas');
+    if (drawCanvas) { drawCanvas.classList.remove('draw-active','draw-eraser','draw-arrow'); drawCanvas.style.pointerEvents = 'none'; }
   }
 }
 
@@ -5508,13 +5514,13 @@ const candleDrawPlugin = {
 
     // Calculate candle width from bar spacing
     const totalBars = view.length;
-    const rightPad  = 60; // Leave 60px for Y-axis price labels
-    const leftPad   = 5;   // Small left padding
+    const rightPad  = 75; // Leave 75px for Y-axis price labels
+    const leftPad   = 8;  // Small left padding
     const chartW    = chart.chartArea.right - chart.chartArea.left - rightPad - leftPad;
-    const maxX      = chart.chartArea.right - rightPad; // Max X for candle right edge
-    const minX      = chart.chartArea.left + leftPad;   // Min X for candle left edge
-    const barW      = Math.max(2, (chartW / totalBars) * 0.65); // 65% of slot width
-    const wickW     = Math.max(1, barW * 0.1); // wick = 10% of bar width
+    const maxX      = chart.chartArea.right - rightPad - 5; // Leave 5px gap from labels
+    const minX      = chart.chartArea.left + leftPad;
+    const barW      = Math.max(3, (chartW / totalBars) * 0.6); // 60% of slot width
+    const wickW     = Math.max(1, barW * 0.15); // wick = 15% of bar width
 
     ctx.save();
     view.forEach((c, i) => {
@@ -8114,14 +8120,14 @@ function renderEmaChart() {
         crosshair: {},
       },
       scales: {
-        x:  { display:true, ticks:{ color:'var(--muted)', font:{family:'Space Mono',size:9}, maxTicksLimit:8 }, grid:{ color:'rgba(255,255,255,.04)' } },
+        x:  { display:true, ticks:{ color:'#fff', font:{family:'Space Mono',size:10,weight:'bold'}, maxTicksLimit:8 }, grid:{ color:'rgba(255,255,255,.1)' } },
         x2: { display:false, type:'linear', min:0, max:view.length-1 },
         y:  { 
           display:true, position:'right', 
-          ticks:{ color:'var(--muted)', font:{family:'Space Mono',size:9}, alignment:'start', padding:12, maxRotation:0 }, 
-          grid:{ color:'rgba(255,255,255,.04)' },
-          suggestedMin: (() => { const m=Math.min(...view.map(c=>Math.min(c[2],c[3]))); const r=m*0.005; return m-r; })(),
-          suggestedMax: (() => { const m=Math.max(...view.map(c=>Math.max(c[2],c[3]))); const r=m*0.005; return m+r; })(),
+          ticks:{ color:'#fff', font:{family:'Space Mono',size:10,weight:'bold'}, alignment:'start', padding:20, maxRotation:0 }, 
+          grid:{ color:'rgba(255,255,255,.1)' },
+          suggestedMin: (() => { const m=Math.min(...view.map(c=>Math.min(c[2],c[3]))); const r=m*0.02; return m-r; })(),
+          suggestedMax: (() => { const m=Math.max(...view.map(c=>Math.max(c[2],c[3]))); const r=m*0.02; return m+r; })(),
         },
       },
       onHover: (e, els, chart) => {
@@ -8186,7 +8192,11 @@ function renderEmaChart() {
   }
 
   // Init drawing canvas + mobile touch
-  setTimeout(() => { initDrawingCanvas(); redrawDrawings(); initMobileTouch(); }, 100);
+  setTimeout(() => { initDrawingCanvas(); redrawDrawings(); initMobileTouch(); initMouseDrag(); }, 100);
+  
+  // Set cursor based on current mode
+  const canvas = document.getElementById('candleCanvas');
+  if (canvas) canvas.style.cursor = window._chartCursorMode === 'drag' ? 'grab' : 'crosshair';
 
   // Start live tick
   if (liveTickTimer) clearInterval(liveTickTimer);
@@ -8223,7 +8233,11 @@ function setDrawTool(tool) {
   const tip = document.getElementById('drawTooltip');
   if (tip) tip.textContent = tips[tool] || '';
   
-  if (tool === 'cross') {
+  if (window._chartCursorMode === 'drag') {
+    // In drag mode, disable all drawing
+    canvas.classList.remove('draw-active','draw-eraser','draw-arrow');
+    canvas.style.pointerEvents = 'none';
+  } else if (tool === 'cross') {
     canvas.classList.remove('draw-active','draw-eraser','draw-arrow');
     canvas.style.pointerEvents = 'none';
   } else if (tool === 'eraser') {
@@ -8655,6 +8669,72 @@ function scrollEmaChart(dir) {
   }
   if (candleChart) { try { candleChart.resetZoom(); } catch(e) {} }
   renderEmaChart();
+}
+
+/* ══ MOUSE DRAG HANDLER ═══════════════════════════ */
+let _mouseDrag = { active:false, lastX:0, lastY:0, startX:0, startY:0, initialized:false };
+
+function initMouseDrag() {
+  if (_mouseDrag.initialized) return;
+  _mouseDrag.initialized = true;
+  
+  const wrap = document.getElementById('emaChartWrap');
+  const canvas = document.getElementById('candleCanvas');
+  if (!wrap) return;
+  
+  wrap.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    if (window._chartCursorMode !== 'drag') return;
+    _mouseDrag.active = true;
+    _mouseDrag.lastX = e.clientX;
+    _mouseDrag.lastY = e.clientY;
+    _mouseDrag.startX = e.clientX;
+    _mouseDrag.startY = e.clientY;
+    if (canvas) canvas.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!_mouseDrag.active || window._chartCursorMode !== 'drag') return;
+    if (!emaAllCandles.length || !candleChart) return;
+    
+    const dx = e.clientX - _mouseDrag.lastX;
+    const dy = e.clientY - _mouseDrag.lastY;
+    _mouseDrag.lastX = e.clientX;
+    _mouseDrag.lastY = e.clientY;
+    
+    const total = emaAllCandles.length;
+    const eb = Math.min(EMA_VIEW_BARS, total);
+    const maxOff = Math.max(0, total - eb);
+    const chartW = canvas ? canvas.offsetWidth * 0.85 : window.innerWidth * 0.85;
+    const pxPerBar = chartW / eb;
+    
+    // X drag = pan left/right
+    if (Math.abs(dx) > Math.abs(dy)) {
+      const barsDelta = dx / pxPerBar;
+      emaViewOffset = Math.max(0, Math.min(maxOff, emaViewOffset + barsDelta));
+    } 
+    // Y drag = zoom in/out (like TradingView)
+    else if (Math.abs(dy) > 2) {
+      const scale = dy > 0 ? 0.95 : 1.05; // drag down = zoom out, drag up = zoom in
+      let newBars = Math.round(EMA_VIEW_BARS * scale);
+      const minBars = Math.max(5, Math.min(10, total));
+      const maxBars = Math.max(total, 300);
+      EMA_VIEW_BARS = Math.max(minBars, Math.min(maxBars, newBars));
+      
+      // Keep offset valid
+      const newEb = Math.min(EMA_VIEW_BARS, total);
+      const newMaxOff = Math.max(0, total - newEb);
+      emaViewOffset = Math.min(emaViewOffset, newMaxOff);
+    }
+    
+    renderEmaChart();
+  });
+  
+  document.addEventListener('mouseup', () => {
+    _mouseDrag.active = false;
+    if (canvas && window._chartCursorMode === 'drag') canvas.style.cursor = 'grab';
+  });
 }
 
 /* ══ MOBILE TOUCH HANDLER ══════════════════════════ */
