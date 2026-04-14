@@ -60,7 +60,7 @@ body::after {
   background-size: 200px 200px;
 }
 
-.app { position:relative; z-index:1; max-width:1700px; margin:0 auto; padding:16px; }
+.app { position:relative; z-index:1; max-width:1700px; margin:0 auto; padding:8px; }
 
 /* ═══════════════ HEADER ═══════════════ */
 .header {
@@ -430,8 +430,7 @@ body::after {
 .ai-disclaimer span { color: var(--yellow); }
 
 /* ═══════════════ MAIN APP ═══════════════ */
-#mainApp { display:none; animation:fadeUp .4s ease; visibility:hidden; opacity:0; }
-#mainApp.visible { display:block; visibility:visible; opacity:1; }
+#mainApp { display:none; animation:fadeUp .4s ease; }
 
 .ctrl-bar {
   display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;
@@ -518,25 +517,22 @@ canvas.oi-chart { width: 100% !important; }
 /* ═══════════════ MOBILE RESPONSIVE ═══════════════ */
 @media (max-width: 768px) {
   body { overflow-x: hidden; }
-  .candle-section { margin: 6px !important; }
-  .candle-select-row { padding: 8px 10px; gap: 6px; }
-  #candleCanvas { height: 280px !important; }
-  .chart-title { font-size: 14px; }
-  .chart-body { padding: 8px; }
-  .chart-topbar { padding: 8px 10px; }
-  #oiChartCanvas { height: 250px !important; }
-  /* Fix right margin cutoff on mobile */
+  .candle-section { margin: 0 !important; border-radius: 0 !important; }
+  .candle-select-row { padding: 6px 8px; gap: 4px; }
+  #candleCanvas { height: calc(100vw * 0.7) !important; min-height: 260px !important; max-height: 420px !important; }
+  #emaChartWrap { padding: 0 !important; }
+  .chart-title { font-size: 13px; }
+  .chart-body { padding: 6px; }
+  .chart-topbar { padding: 6px 8px; }
+  #oiChartCanvas { height: 220px !important; }
   .candle-section, .chart-section {
-    margin-left: 4px !important;
-    margin-right: 4px !important;
-    max-width: calc(100vw - 8px);
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100vw;
   }
-  /* Signal box wrap on mobile */
-  #emaSignalBox { font-size:10px !important; white-space: normal; line-height: 1.6; }
-  /* TF buttons smaller */
-  .tf-btn { padding: 3px 6px; font-size:11px; }
-  /* Indicator legend wrap */
-  #indicatorLegendBar { padding: 4px 8px; gap: 4px; }
+  #emaSignalBox { font-size:10px !important; white-space: normal; line-height: 1.5; }
+  .tf-btn { padding: 3px 5px; font-size:10px; }
+  #indicatorLegendBar { padding: 4px 6px; gap: 4px; }
 }
 
 /* ═══════════════ FULLSCREEN CHART ═══════════════ */
@@ -1453,7 +1449,7 @@ tr.atm-row td.strike-cell { color:var(--accent); }
   </div>
 </div>
 
-<div id="authScreen">
+<div id="authScreen" style="display:flex;">
   <div class="auth-card">
     <div class="auth-title">CONNECT UPSTOX</div>
     <div class="auth-sub">Link your Upstox Developer API to start fetching real-time option chain data with full Greeks, OI, and PCR.</div>
@@ -1523,7 +1519,7 @@ tr.atm-row td.strike-cell { color:var(--accent); }
   </div>
 </div>
 
-<div id="mainApp">
+<div id="mainApp" style="display:none;">
 
   <div class="ctrl-bar">
     <div class="ctrl-group">
@@ -2285,30 +2281,36 @@ tr.atm-row td.strike-cell { color:var(--accent); }
     </div>
 
     <!-- Strategy toggle bar (replaces old legend bar) -->
-    <div id="indicatorLegendBar" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 12px;background:var(--panel2);border-bottom:1px solid var(--border);min-height:36px;font-family:var(--font-mono);font-size:11px;">
+    <div id="indicatorLegendBar" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:5px 10px;background:var(--panel2);border-bottom:1px solid var(--border);min-height:34px;font-family:var(--font-mono);font-size:11px;">
       <!-- Strategy 1: EMA Cross -->
-      <div id="stratCard_strat_ema" onclick="selectStrategy('strat_ema')" style="display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:5px;cursor:pointer;border:1px solid rgba(0,229,160,.4);background:rgba(0,229,160,.1);transition:all .15s;">
-        <button id="stratEye_strat_ema" onclick="event.stopPropagation();toggleStrategyVisible('strat_ema')" style="background:none;border:none;cursor:pointer;padding:0;font-size:13px;line-height:1;">👁</button>
-        <span style="color:#00e5a0;font-size:11px;letter-spacing:.5px;">▲▼</span>
-        <span id="stratName_strat_ema" style="color:var(--text);font-size:10px;">EMA Cross</span>
-        <span id="stratCount_strat_ema" style="color:var(--muted);font-size:10px;"></span>
+      <div id="stratCard_strat_ema" onclick="selectStrategy('strat_ema')" style="display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:5px;cursor:pointer;border:1px solid rgba(0,229,160,.4);background:rgba(0,229,160,.1);transition:all .15s;">
+        <button id="stratEye_strat_ema" onclick="event.stopPropagation();toggleStrategyVisible('strat_ema')" style="background:none;border:none;cursor:pointer;padding:0;font-size:12px;line-height:1;">👁</button>
+        <span style="color:#00e5a0;font-size:10px;">▲▼</span>
+        <span id="stratName_strat_ema" style="color:var(--text);font-size:10px;">EMA</span>
       </div>
       <!-- CSV Strategy Card -->
-      <div id="stratCard_strat_csv" onclick="toggleStrategyVisible('strat_csv')" style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;cursor:pointer;border:1px solid rgba(0,201,255,.4);background:rgba(0,201,255,.08);transition:all .15s;">
-        <button id="stratEye_strat_csv" onclick="event.stopPropagation();toggleStrategyVisible('strat_csv')" style="background:none;border:none;cursor:pointer;padding:0;font-size:12px;">👁</button>
-        <span style="color:#00c9ff;font-size:10px;letter-spacing:.3px;">◆</span>
-        <span id="stratName_strat_csv" style="color:var(--text);font-size:10px;">CSV Strategy</span>
-        <span style="font-size:9px;color:var(--muted);padding:1px 4px;border-radius:3px;background:rgba(0,201,255,.12);">8-day</span>
+      <div id="stratCard_strat_csv" onclick="toggleStrategyVisible('strat_csv')" style="display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;cursor:pointer;border:1px solid rgba(0,201,255,.4);background:rgba(0,201,255,.08);transition:all .15s;">
+        <button id="stratEye_strat_csv" onclick="event.stopPropagation();toggleStrategyVisible('strat_csv')" style="background:none;border:none;cursor:pointer;padding:0;font-size:11px;">👁</button>
+        <span style="color:#00c9ff;font-size:10px;">◆ CSV</span>
       </div>
-
+      <!-- Strategy toggle buttons -->
+      <button id="stratEmaToggle" onclick="toggleStrategy('ema')" style="background:rgba(0,229,160,.15);border:1px solid rgba(0,229,160,.4);color:#00e5a0;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;">EMA ON</button>
+      <button id="stratCsvToggle" onclick="toggleStrategy('csv')" style="background:rgba(255,159,64,.15);border:1px solid rgba(255,159,64,.4);color:#ff9f40;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;">CSV OFF</button>
+      <!-- Cursor mode -->
+      <button id="cursorCrossBtn" onclick="setChartCursor('cross')" style="background:rgba(0,201,255,.2);border:1px solid rgba(0,201,255,.5);color:#00c9ff;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;">✛</button>
+      <button id="cursorDragBtn" onclick="setChartCursor('drag')" style="background:rgba(128,128,128,.15);border:1px solid rgba(128,128,128,.3);color:#888;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;">✋</button>
+      <button onclick="resetChartView()" style="background:rgba(0,201,255,.1);border:1px solid rgba(0,201,255,.3);color:#00c9ff;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:10px;">⟲</button>
       <div style="flex:1"></div>
-      <!-- Signal type legend -->
-      <div id="indMiniLegend" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"></div>
-      <div style="display:flex;gap:6px;align-items:center;font-family:var(--font-mono);font-size:10px;">
-        <span style="color:#00e5a0;">▲ BUY CE</span>
-        <span style="color:#ff3d6b;">▼ BUY PE</span>
-        <span style="color:#ff6b00;">◆ SELL CE</span>
-        <span style="color:#7c3aed;">◆ SELL PE</span>
+      <!-- Signal legend (hidden spans used by JS) -->
+      <span id="legendBuyCE"  style="display:none;color:#00e5a0;font-size:10px;">▲CE</span>
+      <span id="legendBuyPE"  style="display:none;color:#ff3d6b;font-size:10px;">▼PE</span>
+      <span id="legendSellCE" style="display:none;color:#ff6b00;font-size:10px;">◆SCE</span>
+      <span id="legendSellPE" style="display:none;color:#7c3aed;font-size:10px;">◆SPE</span>
+      <div id="indMiniLegend" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:10px;">
+        <span style="color:#00e5a0;">▲CE</span>
+        <span style="color:#ff3d6b;">▼PE</span>
+        <span style="color:#ff6b00;">◆SCE</span>
+        <span style="color:#7c3aed;">◆SPE</span>
       </div>
     </div>
     <!-- Active strategy result panel (below legend) -->
@@ -2321,32 +2323,11 @@ tr.atm-row td.strike-cell { color:var(--accent); }
     <div id="ohlcBar" style="padding:5px 12px;font-family:var(--font-mono);font-size:12px;font-weight:bold;color:#fff;background:rgba(0,0,0,.5);min-height:20px;display:flex;gap:16px;border-radius:4px;"></div>
 
     <!-- Main chart canvas -->
-    <div id="emaChartWrap" style="position:relative;padding:0 8px 8px;touch-action:none;user-select:none;-webkit-user-select:none;">
-      <div style="position:absolute;top:8px;right:16px;z-index:100;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-        <!-- Strategy toggles -->
-        <div style="display:flex;gap:4px;align-items:center;">
-          <span style="font-family:var(--font-mono);font-size:10px;color:#aaa;font-weight:bold;">STRATEGY:</span>
-          <button id="stratEmaToggle" onclick="toggleStrategy('ema')" title="Toggle EMA Signals" style="background:rgba(0,229,160,.2);border:1px solid rgba(0,229,160,.5);color:#00ff88;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:bold;">👁 EMA</button>
-          <button id="stratCsvToggle" onclick="toggleStrategy('csv')" title="Toggle CSV Signals" style="background:rgba(255,159,64,.2);border:1px solid rgba(255,159,64,.5);color:#ffaa00;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:bold;">👁 CSV</button>
-        </div>
-        <div style="width:1px;height:18px;background:var(--border);"></div>
-        <button onclick="resetChartView()" style="background:rgba(0,201,255,.2);border:1px solid rgba(0,201,255,.5);color:#00c9ff;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:bold;white-space:nowrap;z-index:101;">⟲ RESET</button>
-      </div>
-      <!-- Legend -->
-      <div id="chartLegend" style="position:absolute;top:8px;left:16px;z-index:100;display:flex;gap:12px;font-family:var(--font-mono);font-size:11px;font-weight:bold;">
-        <span id="legendBuyCE" style="display:none;color:#00ff88;text-shadow:0 0 4px #00ff88;">▲ BUY CE</span>
-        <span id="legendBuyPE" style="display:none;color:#ff4466;text-shadow:0 0 4px #ff4466;">▼ BUY PE</span>
-        <span id="legendSellCE" style="display:none;color:#ffaa00;text-shadow:0 0 4px #ffaa00;">▼ SELL CE</span>
-        <span id="legendSellPE" style="display:none;color:#00ddff;text-shadow:0 0 4px #00ddff;">▲ SELL PE</span>
-      </div>
-      <!-- Cursor mode toggle -->
-      <div style="position:absolute;top:8px;left:200px;z-index:100;display:flex;gap:4px;">
-        <button id="cursorCrossBtn" onclick="setChartCursor('cross')" title="Crosshair Mode" style="background:rgba(0,201,255,.2);border:1px solid rgba(0,201,255,.5);color:#00c9ff;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:bold;">✛ CROSS</button>
-        <button id="cursorDragBtn" onclick="setChartCursor('drag')" title="Drag Mode" style="background:rgba(128,128,128,.2);border:1px solid rgba(128,128,128,.4);color:#aaa;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:bold;">✋ DRAG</button>
-      </div>
-      <canvas id="candleCanvas" style="display:block;width:100%;height:360px;touch-action:none;cursor:crosshair;"></canvas>
-      <canvas id="drawingCanvas" width="100%" height="360" style="position:absolute;top:0;left:8px;right:8px;height:360px;pointer-events:none;"></canvas>
-      <div id="chartPanHint" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,201,255,.2);border:1px solid rgba(0,201,255,.5);padding:6px 14px;border-radius:12px;font-family:var(--font-mono);font-size:12px;font-weight:bold;color:#00c9ff;pointer-events:none;z-index:50;animation:pulse 2s infinite;">← DRAG / PINCH TO PAN →</div>
+    <div id="emaChartWrap" style="position:relative;padding:0;touch-action:none;user-select:none;-webkit-user-select:none;">
+      <!-- Canvas fills full width, no padding -->
+      <canvas id="candleCanvas" style="display:block;width:100%;height:calc(100vw * 0.65);min-height:280px;max-height:520px;touch-action:none;cursor:crosshair;"></canvas>
+      <canvas id="drawingCanvas" width="100%" height="360" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
+      <div id="chartPanHint" style="display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,201,255,.2);border:1px solid rgba(0,201,255,.5);padding:4px 12px;border-radius:12px;font-family:var(--font-mono);font-size:11px;color:#00c9ff;pointer-events:none;z-index:50;animation:pulse 2s infinite;">← PINCH / DRAG →</div>
     </div>
 
     <!-- Drawing Tools Bar — TradingView style -->
@@ -3023,18 +3004,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (savedToken && savedToken.length > 10) {
       initWithToken(savedToken);
     } else {
-      // Show auth screen, hide main app
+      // Show auth screen
       const authScreen = document.getElementById('authScreen');
       const mainApp = document.getElementById('mainApp');
-      if (authScreen) {
-        authScreen.style.display = 'flex';
-        authScreen.style.visibility = 'visible';
-      }
-      if (mainApp) {
-        mainApp.style.display = 'none';
-        mainApp.style.visibility = 'hidden';
-        mainApp.classList.remove('visible');
-      }
+      if (authScreen) authScreen.style.display = 'flex';
+      if (mainApp) mainApp.style.display = 'none';
       // Pre-fill token field if partially saved
       const tokenField = document.getElementById('directToken');
       if (tokenField && savedToken) tokenField.value = savedToken;
@@ -3288,9 +3262,9 @@ function analyzeOptionChain() {
     }
 
     // 2. Max Pain — weight increases as expiry approaches
-    const painSteps = Math.abs(maxPainDiff) / step;
+    const painSteps2 = Math.abs(maxPainDiff) / step;
     const painWeight = nearExpiry ? 1.5 : 1.0; // near expiry = more pull
-    const effectivePainSteps = painSteps * painWeight;
+    const effectivePainSteps = painSteps2 * painWeight;
     if (effectivePainSteps >= 3) {
       if (maxPainDiff > 0) { score += 2; signals.push({ type:'bull', signal:'Max Pain Far Above Spot (+' + Math.round(maxPainDiff) + ')', detail: `Max Pain ${Math.round(maxPainDiff)} pts upar — ${nearExpiry?'Expiry kal hai, pull aaj se strong hoga!':'Expiry tak upward pull expected.'}` }); }
       else { score -= 2; signals.push({ type:'bear', signal:'Max Pain Far Below Spot (' + Math.round(maxPainDiff) + ')', detail: `Max Pain ${Math.abs(Math.round(maxPainDiff))} pts neeche — ${nearExpiry?'Expiry kal, downward pull strong!':'Expiry tak downward pull.'}` }); }
@@ -3363,8 +3337,8 @@ function analyzeOptionChain() {
   if (expiryDay) confidence = Math.max(50, confidence - 10);
 
   const confLabel = confidence >= 80 ? 'HIGH' : confidence >= 65 ? 'MODERATE' : 'LOW';
-  const resistance = maxCallStrike;
-  const support    = maxPutStrike;
+  const resistance2 = maxCallStrike;
+  const support2    = maxPutStrike;
 
   const pcrReading = pcr > 1.5 ? 'Very bullish — heavy put writing' :
                      pcr > 1.2 ? 'Bullish bias — puts dominant' :
@@ -3384,10 +3358,10 @@ function analyzeOptionChain() {
   const riskFactors = expiryDay
     ? `EXPIRY DAY: ${lastHour ? 'Last hour hai — extreme gamma risk. ' : ''}Max Pain ${maxPain} strongest level. Writers ${maxPain} ke paas expire karna chahenge. Theta buyers ko kha jayega.`
     : score > 0
-    ? `${resistance} toot gaya toh rally accelerate. ${support} break pe trend reverse.`
+    ? `${resistance2} toot gaya toh rally accelerate. ${support2} break pe trend reverse.`
     : score < 0
-    ? `${support} hold karna important. ${resistance} cross pe bearish view invalid.`
-    : `Market ${support}-${resistance} range mein — breakout direction pe depend karo.`;
+    ? `${support2} hold karna important. ${resistance2} cross pe bearish view invalid.`
+    : `Market ${support2}-${resistance2} range mein — breakout direction pe depend karo.`;
 
   const bullishTrade = expiryDay
     ? `Expiry Din: 23700 CE buy SIRF agar spot 23750+ sustain kare 15-min mein. Warna AVOID.`
@@ -3399,7 +3373,7 @@ function analyzeOptionChain() {
     ? `Expiry Din Best: Short Straddle/Strangle ya kuch mat lo — theta aapke against extreme fast!`
     : `Iron Condor: Sell ${atm - step} PE + Buy ${atm - step*2} PE + Sell ${atm + step} CE + Buy ${atm + step*2} CE`;
 
-  const suggestedRange = `${support}-${resistance}`;
+  const suggestedRange = `${support2}-${resistance2}`;
 
   const dteStr = expiryDay ? ' (EXPIRY TODAY🔴)' : nearExpiry ? ` (${dte}d left ⚠)` : ` (${dte}d left)`;
 
@@ -3407,16 +3381,16 @@ function analyzeOptionChain() {
     `PCR ${pcr.toFixed(2)} ${pcr > 1 ? '(put-heavy, bullish bias)' : '(call-heavy, bearish bias)'}. ` +
     `Max Pain ${maxPain} — spot se ${Math.round(Math.abs(maxPainDiff))} pts ${maxPainDiff >= 0 ? 'upar' : 'neeche'}. ` +
     (expiryDay ? `EXPIRY DAY: Theta decay maximum. Max Pain magnet sabse strong aaj. ` : '') +
-    `Key resistance ${resistance} (highest call OI), key support ${support} (highest put OI). ` +
+    `Key resistance2 ${resistance2} (highest call OI), key support2 ${support2} (highest put OI). ` +
     `${dirClass === 'bullish' ? 'Market upar jaane ke zyada chances.' : dirClass === 'bearish' ? 'Market neeche aane ke zyada chances.' : 'Sideways movement expected.'}`;
 
   return {
     direction, dirClass, confidence, confidence_label: confLabel,
     score, summary, key_signals: signals,
-    support_level: support, resistance_level: resistance,
+    support_level: support2, resistance2_level: resistance2,
     suggested_range: suggestedRange,
     trade_ideas: { bullish_trade: bullishTrade, bearish_trade: bearishTrade, neutral_trade: neutralTrade,
-      key_levels: `Support: ${support} | Resistance: ${resistance} | Max Pain: ${maxPain}` },
+      key_levels: `Support: ${support2} | Resistance: ${resistance2} | Max Pain: ${maxPain}` },
     pcr_reading: pcrReading, max_pain_reading: mpReading,
     iv_reading: ivReading, risk_factors: riskFactors,
     expiry_context: { dte, expiryDay, nearExpiry, lastHour },
@@ -4426,13 +4400,13 @@ function runMarketIntelligence() {
     }
     // Seller day (IV>25%)
     if (ivGate === 'seller') {
-      const spok = score >= 2 && livePCR > 1.2;
+      const spokS = score >= 2 && livePCR > 1.2;
       const spok2= score >= 1 && livePCR > 1.1;
-      const scok = score <= -2;
+      const scokS = score <= -2;
       const scok2= score <= -1 && livePCR < 0.9;
-      if (spok || spok2) return { label:'💰 SELL PE (SELLER DAY)', color:'#ff9f40', bg:'rgba(255,159,64,.08)', border:'rgba(255,159,64,.4)',
-        action:`💰 IV ${atmCEiv.toFixed(0)}%>25 + EMA BULL + PCR ${livePCR.toFixed(2)}>1.1 → SELL PE. 6-day: ${spok?'71%':'70%'} win. Stop: 50% premium increase.` };
-      if (scok || scok2) return { label:'💰 SELL CE (SELLER DAY)', color:'#ff9f40', bg:'rgba(255,159,64,.08)', border:'rgba(255,159,64,.4)',
+      if (spokS || spok2) return { label:'💰 SELL PE (SELLER DAY)', color:'#ff9f40', bg:'rgba(255,159,64,.08)', border:'rgba(255,159,64,.4)',
+        action:`💰 IV ${atmCEiv.toFixed(0)}%>25 + EMA BULL + PCR ${livePCR.toFixed(2)}>1.1 → SELL PE. 6-day: ${spokS?'71%':'70%'} win. Stop: 50% premium increase.` };
+      if (scokS || scok2) return { label:'💰 SELL CE (SELLER DAY)', color:'#ff9f40', bg:'rgba(255,159,64,.08)', border:'rgba(255,159,64,.4)',
         action:`💰 IV ${atmCEiv.toFixed(0)}%>25 + EMA BEAR + PCR ${livePCR.toFixed(2)}<0.9 → SELL CE. 6-day: ${scok2?'62%':'61%'} win. Stop: 50% premium increase.` };
       return { label:'🔴 SELLER DAY — WAIT', color:'var(--red)', bg:'rgba(255,61,107,.05)', border:'rgba(255,61,107,.2)',
         action:`🔴 IV ${atmCEiv.toFixed(0)}%>25. Mixed signals. Buyers 36-40%. WAIT.` };
@@ -4759,16 +4733,16 @@ function buildStrategy(name) {
     premium = -net;
   } else if (name === 'bear_ps') {
     const hs = atm, ls = atm - step * 2;
-    const buyLTP  = getPE(hs).ltp || 0;
-    const sellLTP = getPE(ls).ltp || 0;
-    const net = (buyLTP - sellLTP) * qty;
-    maxLoss = net; maxProfit = (hs - ls - buyLTP + sellLTP) * qty;
-    breakevens = [hs - (buyLTP - sellLTP)];
+    const bpBuyLTP  = getPE(hs).ltp || 0;
+    const bpSellLTP = getPE(ls).ltp || 0;
+    const bpNet = (bpBuyLTP - bpSellLTP) * qty;
+    maxLoss = bpNet; maxProfit = (hs - ls - bpBuyLTP + bpSellLTP) * qty;
+    breakevens = [hs - (bpBuyLTP - bpSellLTP)];
     legs = [
-      { label: 'LEG 1', action: 'BUY',  type: 'PE', strike: hs, ltp: buyLTP,  side:'buy'  },
-      { label: 'LEG 2', action: 'SELL', type: 'PE', strike: ls, ltp: sellLTP, side:'sell' },
+      { label: 'LEG 1', action: 'BUY',  type: 'PE', strike: hs, ltp: bpBuyLTP,  side:'buy'  },
+      { label: 'LEG 2', action: 'SELL', type: 'PE', strike: ls, ltp: bpSellLTP, side:'sell' },
     ];
-    premium = -net;
+    premium = -bpNet;
   } else if (name === 'iron_condor') {
     const sc = atm + step, bc = atm + step * 2;
     const sp = atm - step, bp = atm - step * 2;
@@ -4784,13 +4758,13 @@ function buildStrategy(name) {
       { label: 'LEG 4', action: 'BUY',  type: 'PE', strike: bp, ltp: bpLTP, side:'buy'  },
     ];
   } else if (name === 'covered_call') {
-    const cLTP = getCE(atm + step).ltp || 0;
-    premium = cLTP * qty;
-    maxProfit = (step + cLTP) * qty; maxLoss = (spot - cLTP) * qty;
-    breakevens = [spot - cLTP];
+    const cLTP2 = getCE(atm + step).ltp || 0;
+    premium = cLTP2 * qty;
+    maxProfit = (step + cLTP2) * qty; maxLoss = (spot - cLTP2) * qty;
+    breakevens = [spot - cLTP2];
     legs = [
       { label: 'LEG 1', action: 'BUY',  type: 'SPOT', strike: spot, ltp: spot, side:'buy'  },
-      { label: 'LEG 2', action: 'SELL', type: 'CE', strike: atm + step, ltp: cLTP, side:'sell' },
+      { label: 'LEG 2', action: 'SELL', type: 'CE', strike: atm + step, ltp: cLTP2, side:'sell' },
     ];
   }
 
@@ -5119,6 +5093,13 @@ function setTf(btn, tf) {
   currentTf = tf;
   window._emaChartKey = null;  // Force chart reload on TF change
 
+  // Auto-set view bars per timeframe for good candle size
+  const TF_VIEW_BARS = {
+    '1minute': 60, '5minute': 48, '15minute': 40,
+    '30minute': 35, 'day': 60, 'week': 52
+  };
+  EMA_VIEW_BARS = TF_VIEW_BARS[tf] || 60;
+
   // Show API limit note
   const note    = document.getElementById('tfApiNote');
   const periodSel = document.getElementById('emaPeriodSel');
@@ -5137,7 +5118,6 @@ function setTf(btn, tf) {
   if (periodSel) {
     const curDays = parseInt(periodSel.value);
     if (curDays > maxDays) {
-      // Find best option <= maxDays
       const opts = [...periodSel.options];
       const best = opts.filter(o => parseInt(o.value) <= maxDays).pop();
       if (best) periodSel.value = best.value;
@@ -5485,18 +5465,25 @@ const tradingViewCrosshairPlugin = {
       ctx.stroke();
     }
     
-    // Price label box
-    const xScale = chart.scales.x;
-    if (xScale && yScale) {
+    // Crosshair Y label in strip — white box like TV
+    const xScale2 = chart.scales.x;
+    if (xScale2 && yScale) {
       const priceVal = yScale.getValueForPixel(this.lastY);
       const labelTxt = priceVal?.toFixed(1) || '';
-      ctx.font = '10px Space Mono';
-      const tw = ctx.measureText(labelTxt).width;
-      ctx.fillStyle = '#00c9ff';
-      ctx.fillRect(right + 2, this.lastY - 8, tw + 8, 16);
-      ctx.fillStyle = '#000';
-      ctx.textAlign = 'left';
-      ctx.fillText(labelTxt, right + 6, this.lastY + 4);
+      const dpr2    = window.devicePixelRatio || 1;
+      const cw2     = chart.canvas.width / dpr2;
+      const sl2     = right;
+      const sw2     = cw2 - sl2;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(sl2, top, sw2, bottom - top); ctx.clip();
+      ctx.font = 'bold 9px "Space Mono"';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(sl2, this.lastY - 9, sw2, 18);
+      ctx.fillStyle = '#000000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(labelTxt, sl2 + sw2 / 2, this.lastY);
+      ctx.restore();
     }
     
     ctx.restore();
@@ -5535,15 +5522,14 @@ const candleDrawPlugin = {
     const BULL = 'rgba(0,229,160,.95)';
     const BEAR = 'rgba(255,61,107,.95)';
 
-    // Calculate candle width from bar spacing
+    // Calculate candle width from chart area (Y axis is on right)
     const totalBars = view.length;
-    const rightPad  = 75; // Leave 75px for Y-axis price labels
-    const leftPad   = 8;  // Small left padding
-    const chartW    = chart.chartArea.right - chart.chartArea.left - rightPad - leftPad;
-    const maxX      = chart.chartArea.right - rightPad - 5; // Leave 5px gap from labels
-    const minX      = chart.chartArea.left + leftPad;
-    const barW      = Math.max(3, (chartW / totalBars) * 0.6); // 60% of slot width
-    const wickW     = Math.max(1, barW * 0.15); // wick = 15% of bar width
+    const chartArea = chart.chartArea;
+    const chartW  = chartArea.right - chartArea.left;
+    const minX    = chartArea.left;
+    const maxX    = chartArea.right;
+    const barW    = Math.max(2, (chartW / totalBars) * 0.72);
+    const wickW   = Math.max(1, Math.min(2, barW * 0.18));
 
     ctx.save();
     view.forEach((c, i) => {
@@ -5774,36 +5760,113 @@ const candleDrawPlugin = {
   }
 };
 
-// ── Static last-price label plugin (left side) ───────
-const lastPricePlugin = {
-  id: 'lastPrice',
+// ── TradingView-style Y axis strip plugin ────────────────────────────
+// Draws: price ticks, last price (cyan box), S/R/MaxPain/SL/TP labels
+// ALL inside the 55px right strip — zero chart-area intrusion
+const YSTRIP_W = 55;
+const yAxisLabelsPlugin = {
+  id: 'yAxisLabels',
   afterDraw(chart) {
-    if (!emaAllCandles.length) return;
-    const lastC = emaAllCandles[emaAllCandles.length - 1 - emaViewOffset];
-    if (!lastC) return;
-    const price = lastC[4]; // close
     const yScale = chart.scales.y;
     if (!yScale) return;
-    const y = yScale.getPixelForValue(price);
-    const { left, right, top, bottom } = chart.chartArea;
-    if (y < top || y > bottom) return;
-    const ctx = chart.ctx;
+    const { right, top, bottom, left } = chart.chartArea;
+    const ctx   = chart.ctx;
+    const dpr   = window.devicePixelRatio || 1;
+    const cw    = chart.canvas.width  / dpr;
+    const sl    = right;          // strip left edge = chart right
+    const sw    = cw - sl;        // strip width (should be ~55)
+
     ctx.save();
-    // Dashed line
-    ctx.beginPath(); ctx.setLineDash([4,3]); ctx.lineWidth=1;
-    ctx.strokeStyle='rgba(0,201,255,.5)';
-    ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
-    // Label on left
-    const txt = price.toFixed(1);
-    const tw  = ctx.measureText(txt).width;
-    ctx.fillStyle='#0a1628';
-    ctx.fillRect(0, y-10, left-2, 20);
-    ctx.fillStyle='#00c9ff'; ctx.font='bold 9px "Space Mono"';
-    ctx.textAlign='right'; ctx.textBaseline='middle';
-    ctx.fillText(txt, left-4, y);
+    ctx.beginPath(); ctx.rect(sl, top - 2, sw + 2, bottom - top + 4); ctx.clip();
+
+    // Strip background
+    ctx.fillStyle = '#070b12';
+    ctx.fillRect(sl, top - 2, sw + 2, bottom - top + 4);
+
+    // Thin separator line
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(sl, top); ctx.lineTo(sl, bottom); ctx.stroke();
+
+    ctx.font = '9px "Space Mono"';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    // ── Price grid ticks ──
+    (yScale.ticks || []).forEach(tick => {
+      const py = yScale.getPixelForValue(tick.value);
+      if (py < top || py > bottom) return;
+      ctx.strokeStyle = 'rgba(255,255,255,.1)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(sl, py); ctx.lineTo(sl + 4, py); ctx.stroke();
+      ctx.fillStyle = 'rgba(160,190,215,.65)';
+      ctx.fillText(tick.value.toFixed(0), sl + 6, py);
+    });
+
+    // ── Annotation level labels (S/R/MaxPain/SL/TP) ──
+    const levels = [
+      { key:'ema_res',  color:'#ff5577', label: v => '⛔R '  +v.toFixed(0) },
+      { key:'ema_sup',  color:'#00e5a0', label: v => '🛡S '  +v.toFixed(0) },
+      { key:'ema_mp',   color:'#ffd000', label: v => '🎯'    +v.toFixed(0) },
+      { key:'ema_spot', color:'#00c9ff', label: v => '●'     +v.toFixed(0) },
+      { key:'ema_sl',   color:'#ff3355', label: v => 'SL '   +v.toFixed(0) },
+      { key:'ema_tp1',  color:'#00c896', label: v => 'TP1 '  +v.toFixed(0) },
+      { key:'ema_tp2',  color:'#00ff88', label: v => 'TP2 '  +v.toFixed(0) },
+    ];
+    if (chart.options?.plugins?.annotation?.annotations) {
+      const anns = chart.options.plugins.annotation.annotations;
+      levels.forEach(({ key, color, label }) => {
+        const ann = anns[key];
+        if (!ann) return;
+        const py = yScale.getPixelForValue(ann.value);
+        if (py < top || py > bottom) return;
+        const txt = label(ann.value);
+        ctx.font = '8px "Space Mono"';
+        const tw = ctx.measureText(txt).width;
+        ctx.fillStyle = 'rgba(7,11,18,.9)';
+        ctx.fillRect(sl + 1, py - 8, Math.min(tw + 6, sw - 2), 16);
+        ctx.fillStyle = color;
+        ctx.fillText(txt, sl + 3, py);
+      });
+    }
+
+    // ── Last price (cyan highlighted box — TV style) ──
+    if (emaAllCandles.length) {
+      const lastC = emaAllCandles[emaAllCandles.length - 1 - emaViewOffset];
+      if (lastC) {
+        const price = lastC[4];
+        const py = yScale.getPixelForValue(price);
+        if (py >= top && py <= bottom) {
+          // Dashed line across chart area
+          ctx.restore(); ctx.save();
+          ctx.setLineDash([4,3]);
+          ctx.strokeStyle = 'rgba(0,201,255,.45)';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke();
+          ctx.setLineDash([]);
+          // Clip to strip again
+          ctx.beginPath(); ctx.rect(sl, top - 2, sw + 2, bottom - top + 4); ctx.clip();
+          // Cyan box
+          ctx.font = 'bold 9px "Space Mono"';
+          const txt = price.toFixed(1);
+          const tw  = ctx.measureText(txt).width;
+          ctx.fillStyle = '#00c9ff';
+          ctx.fillRect(sl, py - 9, sw, 18);
+          ctx.fillStyle = '#000';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(txt, sl + sw / 2, py);
+        }
+      }
+    }
+
     ctx.restore();
   }
 };
+
+// ── Crosshair Y label in strip ────────────────────────
+const lastPricePlugin = { id:'lastPrice', afterDraw(chart){} }; // stub
 
 // ── Compute indicator datasets for renderEmaChart ────
 function buildIndicatorDatasets(candles, viewStart, viewEnd) {
@@ -5836,12 +5899,12 @@ function buildIndicatorDatasets(candles, viewStart, viewEnd) {
       if (p.src === 'open') { emaOpenFull = full; }
     }
     else if (ind.type === 'sma') {
-      const full = calcSMA(src, p.period || 14);
-      datasets.push({ type:'line', label:ind.id, data:full.slice(viewStart,viewEnd), borderColor:color, borderWidth:1.5, pointRadius:0, tension:0.1, fill:false, order:1 });
+      const smaFull = calcSMA(src, p.period || 14);
+      datasets.push({ type:'line', label:ind.id, data:smaFull.slice(viewStart,viewEnd), borderColor:color, borderWidth:1.5, pointRadius:0, tension:0.1, fill:false, order:1 });
     }
     else if (ind.type === 'vwap') {
-      const full = calcVWAP(candles);
-      datasets.push({ type:'line', label:ind.id, data:full.slice(viewStart,viewEnd), borderColor:color, borderWidth:1.5, pointRadius:0, borderDash:[4,2], tension:0.1, fill:false, order:1 });
+      const vwapFull = calcVWAP(candles);
+      datasets.push({ type:'line', label:ind.id, data:vwapFull.slice(viewStart,viewEnd), borderColor:color, borderWidth:1.5, pointRadius:0, borderDash:[4,2], tension:0.1, fill:false, order:1 });
     }
     else if (ind.type === 'bb') {
       const { mid, upper, lower } = calcBB(closes, p.period||20, p.mult||2);
@@ -7186,10 +7249,10 @@ function buildCSVRow() {
   // RSI
   let rsi14 = '';
   if (emaAllCandles.length > 14) {
-    const closes = emaAllCandles.map(c => c[4]);
-    const rsiArr = calcRSI(closes, 14);
-    const last   = rsiArr[rsiArr.length - 1];
-    if (last != null) rsi14 = last.toFixed(2);
+    const closesRSI = emaAllCandles.map(c => c[4]);
+    const rsiArr = calcRSI(closesRSI, 14);
+    const lastRSI = rsiArr[rsiArr.length - 1];
+    if (lastRSI != null) rsi14 = lastRSI.toFixed(2);
   }
 
   const momentum = (callBuild + putBuild) > (callUnwind + putUnwind) ? 'BUILDING' : 'UNWINDING';
@@ -7592,10 +7655,10 @@ function runBuyerSellerAdvisor() {
   const sellCE3  = ce_iv>25 && emaBear2 && pcr<0.9;
 
   if (dte === 0) {
-    const emaBias = document.getElementById('sentTrendVal')?.textContent || 'NEUTRAL';
-    if (emaBias.includes('BULLISH') || pcr > 1.1) {
+    const emaBiasExpiry = document.getElementById('sentTrendVal')?.textContent || 'NEUTRAL';
+    if (emaBiasExpiry.includes('BULLISH') || pcr > 1.1) {
       finalAdvice = 'EXPIRY DAY -- BULLISH: SELL PE!|Spot ' + spot + ' (PCR ' + pcr.toFixed(2) + ' bullish). CE mat karo -- theta kha jayega. SELL PE @ ' + atm + ' PE Rs.' + pe_ltp.toFixed(1) + '. Theta aapka friend! SL: +50%, Target: -30%.';
-    } else if (emaBias.includes('BEARISH') || pcr < 0.85) {
+    } else if (emaBiasExpiry.includes('BEARISH') || pcr < 0.85) {
       finalAdvice = 'EXPIRY DAY -- BEARISH: SELL CE!|Spot neeche jaa sakta hai (PCR ' + pcr.toFixed(2) + ' bearish). PE mat karo -- theta kha jayega. SELL CE @ ' + atm + ' CE Rs.' + ce_ltp.toFixed(1) + '. Theta aapka friend! SL: +50%, Target: -30%.';
     } else {
       finalAdvice = 'EXPIRY DAY -- NEUTRAL: SHORT STRADDLE!|Direction unclear. SELL CE Rs.' + ce_ltp.toFixed(1) + ' + SELL PE Rs.' + pe_ltp.toFixed(1) + ' @ ' + atm + '. Theta se dono taraf profit.';
@@ -8021,13 +8084,13 @@ function renderEmaChart() {
     const ce_iv = atmRow?.call_options?.option_greeks?.iv || 0;
     const dte = getDaysToExpiry(document.getElementById('expirySel')?.value || '');
     const emaBias = document.getElementById('sentTrendVal')?.textContent || 'NEUTRAL';
-    const pcr = window._livePCR || 1;
+    const livePcr = window._livePCR || 1;
     
     if (ce_iv > 25 || dte === 0) {
-      if (emaBias.includes('BULLISH') || pcr > 1.1) {
+      if (emaBias.includes('BULLISH') || livePcr > 1.1) {
         window._csvSellSignals.push({ type: 'SELL_PE', idx: candles.length - 1 });
       }
-      if (emaBias.includes('BEARISH') || pcr < 0.85) {
+      if (emaBias.includes('BEARISH') || livePcr < 0.85) {
         window._csvSellSignals.push({ type: 'SELL_CE', idx: candles.length - 1 });
       }
     }
@@ -8042,16 +8105,17 @@ function renderEmaChart() {
   if (window.ChartDataLabels) Chart.register(ChartDataLabels);
   Chart.register(candleDrawPlugin);
   Chart.register(tradingViewCrosshairPlugin);
+  Chart.register(yAxisLabelsPlugin);
 
   candleChart = new Chart(canvas.getContext('2d'), {
     data: { labels, datasets },
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
-      layout: { padding: { top: 20 } },
+      layout: { padding: { top: 2, right: 55, bottom: 0, left: 0 } },
       interaction: { mode:'index', intersect:false },
       plugins: {
         datalabels: { display: false },
-        legend: { display: false },
+        legend:     { display: false },
         annotation: {
           annotations: (() => {
             const ann = {};
@@ -8063,94 +8127,45 @@ function renderEmaChart() {
             let mCOI=0, mPOI=0, res3=0, sup3=0;
             chainData.forEach(d => {
               if (Math.abs(d.strike_price - liveSpot3) > 2000) return;
-              const coi = d.call_options?.market_data?.oi || 0;
-              const poi = d.put_options?.market_data?.oi  || 0;
-              if (coi > mCOI) { mCOI = coi; res3 = d.strike_price; }
-              if (poi > mPOI) { mPOI = poi; sup3 = d.strike_price; }
+              const coiItem = d.call_options?.market_data?.oi || 0;
+              const poi     = d.put_options?.market_data?.oi  || 0;
+              if (coiItem > mCOI) { mCOI = coiItem; res3 = d.strike_price; }
+              if (poi    > mPOI)  { mPOI = poi;      sup3 = d.strike_price; }
             });
-            if (res3) ann.ema_res = { type:'line', scaleID:'y', value:res3,
-              borderColor:'rgba(255,61,107,.55)', borderWidth:1.2, borderDash:[5,3],
-              label:{ content:'⛔ R '+res3, enabled:true, position:'start',
-                color:'#ff3d6b', backgroundColor:'rgba(255,61,107,.1)',
-                font:{family:'Space Mono',size:9} } };
-            if (sup3) ann.ema_sup = { type:'line', scaleID:'y', value:sup3,
-              borderColor:'rgba(0,229,160,.55)', borderWidth:1.2, borderDash:[5,3],
-              label:{ content:'🛡 S '+sup3, enabled:true, position:'start',
-                color:'#00e5a0', backgroundColor:'rgba(0,229,160,.1)',
-                font:{family:'Space Mono',size:9} } };
-            if (maxPain3) ann.ema_mp = { type:'line', scaleID:'y', value:maxPain3,
-              borderColor:'rgba(255,208,0,.7)', borderWidth:1.8, borderDash:[7,4],
-              label:{ content:'🎯 MaxPain '+maxPain3, enabled:true, position:'end',
-                color:'#ffd000', backgroundColor:'rgba(255,208,0,.12)',
-                font:{family:'Space Mono',size:9,weight:'bold'} } };
-            // Spot line
-            if (liveSpot3) ann.ema_spot = { type:'line', scaleID:'y', value:liveSpot3,
-              borderColor:'rgba(0,201,255,.6)', borderWidth:1.5,
-              label:{ content:'SPOT '+liveSpot3.toFixed(0), enabled:true, position:'end',
-                color:'#00c9ff', backgroundColor:'rgba(0,201,255,.12)',
-                font:{family:'Space Mono',size:9,weight:'bold'} } };
-            // TP1, TP2, SL from ATM CE LTP
-            const atmRow4 = chainData.find(d => d.strike_price === Math.round(liveSpot3/step3)*step3);
-            const atmCeLtp4 = atmRow4?.call_options?.market_data?.ltp || 0;
+            // Lines only - labels drawn by yAxisLabelsPlugin in Y strip
+            if (res3)      ann.ema_res  = { type:'line', scaleID:'y', value:res3,      borderColor:'rgba(255,61,107,.6)',  borderWidth:1, borderDash:[5,3], label:{display:false} };
+            if (sup3)      ann.ema_sup  = { type:'line', scaleID:'y', value:sup3,      borderColor:'rgba(0,229,160,.6)',   borderWidth:1, borderDash:[5,3], label:{display:false} };
+            if (maxPain3)  ann.ema_mp   = { type:'line', scaleID:'y', value:maxPain3,  borderColor:'rgba(255,208,0,.65)',  borderWidth:1, borderDash:[4,3], label:{display:false} };
+            if (liveSpot3) ann.ema_spot = { type:'line', scaleID:'y', value:liveSpot3, borderColor:'rgba(0,201,255,.45)', borderWidth:1, borderDash:[],    label:{display:false} };
+            const atmRow4    = chainData.find(d => d.strike_price === Math.round(liveSpot3/step3)*step3);
+            const atmCeLtp4  = atmRow4?.call_options?.market_data?.ltp || 0;
             if (atmCeLtp4 > 0 && liveSpot3 > 5000) {
-              const sl4  = liveSpot3 - atmCeLtp4;
-              const tp1_4= liveSpot3 + atmCeLtp4 * 1.5;
-              const tp2_4= liveSpot3 + atmCeLtp4 * 3.0;
-              const minSpread4 = liveSpot3 * 0.002;
-              if (Math.abs(tp1_4 - liveSpot3) > minSpread4) {
-                ann.ema_sl  = { type:'line', scaleID:'y', value:sl4,
-                  borderColor:'rgba(255,30,60,.45)', borderWidth:1, borderDash:[3,5],
-                  label:{ content:'SL '+sl4.toFixed(0), enabled:true, position:'end',
-                    color:'#ff1a4a', backgroundColor:'rgba(0,0,0,.7)', font:{family:'Space Mono',size:8} } };
-                ann.ema_tp1 = { type:'line', scaleID:'y', value:tp1_4,
-                  borderColor:'rgba(0,229,160,.45)', borderWidth:1, borderDash:[3,5],
-                  label:{ content:'TP1 '+tp1_4.toFixed(0), enabled:true, position:'end',
-                    color:'#00c896', backgroundColor:'rgba(0,0,0,.7)', font:{family:'Space Mono',size:8} } };
-                ann.ema_tp2 = { type:'line', scaleID:'y', value:tp2_4,
-                  borderColor:'rgba(0,255,136,.5)', borderWidth:1.5, borderDash:[4,4],
-                  label:{ content:'TP2 '+tp2_4.toFixed(0), enabled:true, position:'end',
-                    color:'#00ff88', backgroundColor:'rgba(0,0,0,.7)', font:{family:'Space Mono',size:8} } };
+              const sl4   = liveSpot3 - atmCeLtp4;
+              const tp1_4 = liveSpot3 + atmCeLtp4 * 1.5;
+              const tp2_4 = liveSpot3 + atmCeLtp4 * 3.0;
+              if (Math.abs(tp1_4 - liveSpot3) > liveSpot3 * 0.002) {
+                ann.ema_sl  = { type:'line', scaleID:'y', value:sl4,   borderColor:'rgba(255,30,60,.4)',   borderWidth:1, borderDash:[3,5], label:{display:false} };
+                ann.ema_tp1 = { type:'line', scaleID:'y', value:tp1_4, borderColor:'rgba(0,229,160,.4)',   borderWidth:1, borderDash:[3,5], label:{display:false} };
+                ann.ema_tp2 = { type:'line', scaleID:'y', value:tp2_4, borderColor:'rgba(0,255,136,.45)', borderWidth:1, borderDash:[4,4], label:{display:false} };
               }
             }
             return ann;
           })(),
         },
-        zoom: {
-          pan:  { 
-            enabled: true, mode: 'xy',
-            onPan({ chart }) {
-              const total = emaAllCandles.length;
-              const visLen = Math.round(chart.scales.x.max - chart.scales.x.min);
-              const effectiveBars = Math.min(EMA_VIEW_BARS, total);
-              const maxOffset = Math.max(0, total - effectiveBars);
-              const newOffset = Math.round(chart.scales.x.min);
-              emaViewOffset = Math.min(Math.max(0, newOffset), maxOffset);
-            }
-          },
-          zoom: { 
-            wheel:{ enabled:true, speed:0.05 },
-            pinch:{ enabled:true },
-            mode:'xy',
-            onZoom({ chart }) {
-              const visLen = Math.round(chart.scales.x.max - chart.scales.x.min);
-              const total = emaAllCandles.length;
-              if (visLen >= 10 && visLen <= total) {
-                EMA_VIEW_BARS = visLen;
-              }
-            }
-          },
-        },
-        crosshair: {},
+        zoom: { pan:{enabled:false}, zoom:{wheel:{enabled:false},pinch:{enabled:false}} },
       },
       scales: {
-        x:  { display:true, ticks:{ color:'#fff', font:{family:'Space Mono',size:10,weight:'bold'}, maxTicksLimit:8 }, grid:{ color:'rgba(255,255,255,.1)' } },
+        x: {
+          display: true,
+          ticks: { color:'rgba(255,255,255,.55)', font:{family:'Space Mono',size:9}, maxTicksLimit:6, maxRotation:0 },
+          grid:  { color:'rgba(255,255,255,.04)' }
+        },
         x2: { display:false, type:'linear', min:0, max:view.length-1 },
-        y:  { 
-          display:true, position:'right', 
-          ticks:{ color:'#fff', font:{family:'Space Mono',size:10,weight:'bold'}, alignment:'start', padding:20, maxRotation:0 }, 
-          grid:{ color:'rgba(255,255,255,.1)' },
-          suggestedMin: (() => { const m=Math.min(...view.map(c=>Math.min(c[2],c[3]))); const r=m*0.02; return m-r; })(),
-          suggestedMax: (() => { const m=Math.max(...view.map(c=>Math.max(c[2],c[3]))); const r=m*0.02; return m+r; })(),
+        y: {
+          display:  false,     // completely hidden — yAxisLabelsPlugin draws everything
+          position: 'right',
+          min: (() => { const lows=view.map(c=>c[3]); const highs=view.map(c=>c[2]); const mn=Math.min(...lows); const range=Math.max(...highs)-mn; return mn - range*0.08; })(),
+          max: (() => { const lows=view.map(c=>c[3]); const highs=view.map(c=>c[2]); const mx=Math.max(...highs); const range=mx-Math.min(...lows); return mx + range*0.08; })(),
         },
       },
       onHover: (e, els, chart) => {
@@ -8188,12 +8203,12 @@ function renderEmaChart() {
       const t = emaAllCandles.length;
       const eb = Math.min(EMA_VIEW_BARS, t);
       const maxOff = Math.max(0, t - eb);
-      const step = Math.max(1, Math.round(eb * 0.1));
+      const kbStep = Math.max(1, Math.round(eb * 0.1));
       if (e.key === 'ArrowLeft') {
-        emaViewOffset = Math.min(maxOff, emaViewOffset + step);
+        emaViewOffset = Math.min(maxOff, emaViewOffset + kbStep);
         renderEmaChart();
       } else if (e.key === 'ArrowRight') {
-        emaViewOffset = Math.max(0, emaViewOffset - step);
+        emaViewOffset = Math.max(0, emaViewOffset - kbStep);
         renderEmaChart();
       } else if (e.key === 'Home') {
         emaViewOffset = 0;
@@ -8208,17 +8223,18 @@ function renderEmaChart() {
   }
   // Show pan hint if data can be panned
   if (panHint) {
-    const t = emaAllCandles.length;
-    const eb = Math.min(EMA_VIEW_BARS, t);
-    const maxOff = Math.max(0, t - eb);
-    panHint.style.display = maxOff > 0 ? 'block' : 'none';
+    const tHint = emaAllCandles.length;
+    const ebHint = Math.min(EMA_VIEW_BARS, tHint);
+    const maxOffHint = Math.max(0, tHint - ebHint);
+    panHint.style.display = maxOffHint > 0 ? 'block' : 'none';
   }
 
   // Init drawing canvas + mobile touch
-  setTimeout(() => { initDrawingCanvas(); redrawDrawings(); initMobileTouch(); initMouseDrag(); }, 100);
+  setTimeout(() => { initDrawingCanvas(); redrawDrawings(); initMobileTouch(); initMouseDrag(); initWheelZoom(); }, 100);
   
-  // Set cursor based on current mode (reuse canvas from above)
-  if (canvas) canvas.style.cursor = window._chartCursorMode === 'drag' ? 'grab' : 'crosshair';
+  // Set cursor based on current mode
+  const cursorCanvas = document.getElementById('candleCanvas');
+  if (cursorCanvas) cursorCanvas.style.cursor = window._chartCursorMode === 'drag' ? 'grab' : 'crosshair';
 
   // Start live tick
   if (liveTickTimer) clearInterval(liveTickTimer);
@@ -8693,6 +8709,28 @@ function scrollEmaChart(dir) {
   renderEmaChart();
 }
 
+/* ══ WHEEL ZOOM ════════════════════════════════════ */
+let _wheelZoomInit = false;
+function initWheelZoom() {
+  if (_wheelZoomInit) return;
+  _wheelZoomInit = true;
+  const wrap = document.getElementById('emaChartWrap');
+  if (!wrap) return;
+  wrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (!emaAllCandles.length) return;
+    const total  = emaAllCandles.length;
+    const delta  = e.deltaY > 0 ? 1.12 : 0.89;  // scroll down = zoom out, up = zoom in
+    let newBars  = Math.round(EMA_VIEW_BARS * delta);
+    newBars      = Math.max(10, Math.min(total, newBars));
+    EMA_VIEW_BARS = newBars;
+    // Keep offset valid
+    const maxOff = Math.max(0, total - EMA_VIEW_BARS);
+    emaViewOffset = Math.min(emaViewOffset, maxOff);
+    renderEmaChart();
+  }, { passive: false });
+}
+
 /* ══ MOUSE DRAG HANDLER ═══════════════════════════ */
 let _mouseDrag = { active:false, lastX:0, lastY:0, startX:0, startY:0, initialized:false };
 
@@ -8706,7 +8744,8 @@ function initMouseDrag() {
   
   wrap.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
-    if (window._chartCursorMode !== 'drag') return;
+    // In cross mode only drag if Shift held or it's not a drawing tool active
+    if (window._chartCursorMode === 'cross' && activeDrawTool !== 'cross') return;
     _mouseDrag.active = true;
     _mouseDrag.lastX = e.clientX;
     _mouseDrag.lastY = e.clientY;
@@ -8717,45 +8756,32 @@ function initMouseDrag() {
   });
   
   document.addEventListener('mousemove', (e) => {
-    if (!_mouseDrag.active || window._chartCursorMode !== 'drag') return;
-    if (!emaAllCandles.length || !candleChart) return;
+    if (!_mouseDrag.active) return;
+    if (!emaAllCandles.length) return;
     
     const dx = e.clientX - _mouseDrag.lastX;
-    const dy = e.clientY - _mouseDrag.lastY;
     _mouseDrag.lastX = e.clientX;
     _mouseDrag.lastY = e.clientY;
     
+    if (Math.abs(dx) < 1) return;
+
     const total = emaAllCandles.length;
     const eb = Math.min(EMA_VIEW_BARS, total);
     const maxOff = Math.max(0, total - eb);
-    const chartW = canvas ? canvas.offsetWidth * 0.85 : window.innerWidth * 0.85;
+    const chartW = canvas ? canvas.offsetWidth : window.innerWidth;
     const pxPerBar = chartW / eb;
     
-    // X drag = pan left/right
-    if (Math.abs(dx) > Math.abs(dy)) {
-      const barsDelta = dx / pxPerBar;
-      emaViewOffset = Math.max(0, Math.min(maxOff, emaViewOffset + barsDelta));
-    } 
-    // Y drag = zoom in/out (like TradingView)
-    else if (Math.abs(dy) > 2) {
-      const scale = dy > 0 ? 0.95 : 1.05; // drag down = zoom out, drag up = zoom in
-      let newBars = Math.round(EMA_VIEW_BARS * scale);
-      const minBars = Math.max(5, Math.min(10, total));
-      const maxBars = Math.max(total, 300);
-      EMA_VIEW_BARS = Math.max(minBars, Math.min(maxBars, newBars));
-      
-      // Keep offset valid
-      const newEb = Math.min(EMA_VIEW_BARS, total);
-      const newMaxOff = Math.max(0, total - newEb);
-      emaViewOffset = Math.min(emaViewOffset, newMaxOff);
-    }
-    
+    // drag right = show older (offset increases), drag left = newer (offset decreases)
+    const barsDelta = -dx / pxPerBar;
+    emaViewOffset = Math.max(0, Math.min(maxOff, emaViewOffset + barsDelta));
+    _cachedSignals = null; // clear signal cache on pan
     renderEmaChart();
   });
   
   document.addEventListener('mouseup', () => {
+    if (!_mouseDrag.active) return;
     _mouseDrag.active = false;
-    if (canvas && window._chartCursorMode === 'drag') canvas.style.cursor = 'grab';
+    if (canvas) canvas.style.cursor = window._chartCursorMode === 'drag' ? 'grab' : 'crosshair';
   });
 }
 
@@ -8842,15 +8868,14 @@ function initMobileTouch() {
 
       const canvas2 = document.getElementById('candleCanvas');
       if (!canvas2) return;
-      const total = emaAllCandles.length;
-      const effectiveBars = Math.min(EMA_VIEW_BARS, total);
-      const pxPerBar = (canvas2.offsetWidth * 0.85) / effectiveBars;
+      const totalDrag = emaAllCandles.length;
+      const effectiveBarsDrag = Math.min(EMA_VIEW_BARS, totalDrag);
+      const pxPerBar = canvas2.offsetWidth / effectiveBarsDrag;
       const barsDelta = deltaX / pxPerBar;
-      const maxOff = Math.max(0, total - effectiveBars);
+      const maxOffDrag = Math.max(0, totalDrag - effectiveBarsDrag);
 
-      // drag RIGHT = show newer (offset decreases)
-      // drag LEFT  = show older (offset increases)
-      emaViewOffset = Math.max(0, Math.min(maxOff, emaViewOffset - barsDelta));
+      // drag RIGHT = show older (offset increases), drag LEFT = newer (offset decreases)
+      emaViewOffset = Math.max(0, Math.min(maxOffDrag, emaViewOffset - barsDelta));
       if (candleChart) { try { candleChart.resetZoom(); } catch(er) {} }
       if (!_touchState._rafPending) {
         _touchState._rafPending = true;
@@ -8880,13 +8905,13 @@ function toggleChartFullscreen() {
   const wrap = document.getElementById('emaChartWrap') || document.getElementById('candleCanvas')?.parentElement;
   if (!wrap) return;
   const isFs = wrap.classList.contains('chart-fullscreen');
-  const canvas = document.getElementById('candleCanvas');
+  const fsCanvas = document.getElementById('candleCanvas');
   if (isFs) {
     wrap.classList.remove('chart-fullscreen');
-    if (canvas) canvas.style.height = '360px';
+    if (fsCanvas) fsCanvas.style.height = '360px';
   } else {
     wrap.classList.add('chart-fullscreen');
-    if (canvas) canvas.style.height = (window.innerHeight - 120) + 'px';
+    if (fsCanvas) fsCanvas.style.height = (window.innerHeight - 120) + 'px';
   }
   setTimeout(() => { if (candleChart) { candleChart.resize(); } renderEmaChart(); }, 100);
 }
@@ -9006,25 +9031,14 @@ function loginWithToken() {
 }
 
 function initWithToken(token) {
-  console.log('initWithToken called, token length:', token.length);
   accessToken = token;
   localStorage.setItem('upstox_token', token);
   const authScreen = document.getElementById('authScreen');
   const mainApp = document.getElementById('mainApp');
   const logoutBtn = document.getElementById('logoutBtn');
-  
-  // Force hide auth screen
-  if (authScreen) {
-    authScreen.style.display = 'none';
-    authScreen.style.visibility = 'hidden';
-  }
-  if (mainApp) {
-    mainApp.style.display = 'block';
-    mainApp.style.visibility = 'visible';
-    mainApp.classList.add('visible');
-  }
+  if (authScreen) authScreen.style.display = 'none';
+  if (mainApp) mainApp.style.display = 'block';
   if (logoutBtn) logoutBtn.style.display = 'flex';
-  
   onSymbolChange();
   setTimeout(() => { if (typeof loadNews === 'function') loadNews(); }, 1000);
 }
@@ -9036,15 +9050,8 @@ function logout() {
   const mainApp = document.getElementById('mainApp');
   const authScreen = document.getElementById('authScreen');
   const logoutBtn = document.getElementById('logoutBtn');
-  if (mainApp) {
-    mainApp.style.display = 'none';
-    mainApp.style.visibility = 'hidden';
-    mainApp.classList.remove('visible');
-  }
-  if (authScreen) {
-    authScreen.style.display = 'flex';
-    authScreen.style.visibility = 'visible';
-  }
+  if (mainApp) mainApp.style.display = 'none';
+  if (authScreen) authScreen.style.display = 'flex';
   if (logoutBtn) logoutBtn.style.display = 'none';
   if (autoTimer) clearInterval(autoTimer);
 }
@@ -9120,8 +9127,8 @@ async function fetchChain() {
     onChainLoaded();
     toast('✓ Option chain loaded — ' + chainData.length + ' strikes', false);
   } catch(e) {
-    const instrKey = document.getElementById('symbolSel').value;
-    const isStock  = INSTRUMENTS[instrKey]?.type === 'stock';
+    const instrKeyFetch = document.getElementById('symbolSel').value;
+    const isStock  = INSTRUMENTS[instrKeyFetch]?.type === 'stock';
     const errMsg   = isStock
       ? `⚠ Stock option chain load nahi hua: ${e.message}<br><br>
          <span style="font-size:10px;color:var(--muted)">
@@ -9583,92 +9590,7 @@ function toast(msg, isErr = false) {
   clearTimeout(el._t);
   el._t = setTimeout(() => { el.style.display = 'none'; }, isErr ? 6000 : 3000);
 }
-</script>
 
-<div id="mobileNav" style="
-  display:none;
-  position:fixed; bottom:0; left:0; right:0; z-index:200;
-  background:rgba(7,11,18,.97);
-  border-top:1px solid var(--border2);
-  padding:8px 0 env(safe-area-inset-bottom,8px);
-  backdrop-filter:blur(20px);
-">
-  <div style="display:flex; justify-content:space-around; align-items:center;">
-    <button onclick="mobileScrollTo('chain')" style="background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">
-      <span style="font-size:18px;">📊</span>CHAIN
-    </button>
-    <button onclick="mobileScrollTo('ai')" style="background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">
-      <span style="font-size:18px;">🧠</span>AI
-    </button>
-    <button onclick="fetchChain()" style="background:var(--accent);border:none;color:#000;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 20px;border-radius:20px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:1px;">
-      <span style="font-size:16px;">⟳</span>REFRESH
-    </button>
-    <button onclick="mobileScrollTo('unusual')" style="background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">
-      <span style="font-size:18px;">🔥</span>ALERTS
-    </button>
-    <button onclick="mobileScrollTo('wa')" style="background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">
-      <span style="font-size:18px;">💬</span>WA
-    </button>
-  </div>
-</div>
-
-<script>
-(function(){
-  function checkMobileNav() {
-    const nav = document.getElementById('mobileNav');
-    if (!nav) return;
-    if (window.innerWidth <= 768) {
-      nav.style.display = 'block';
-      document.querySelector('.app').style.paddingBottom = '72px';
-      // Show scroll hint
-      const hint = document.getElementById('scrollHint');
-      if (hint) hint.style.display = 'block';
-    } else {
-      nav.style.display = 'none';
-      document.querySelector('.app').style.paddingBottom = '0';
-      const hint = document.getElementById('scrollHint');
-      if (hint) hint.style.display = 'none';
-    }
-  }
-  window.addEventListener('resize', checkMobileNav);
-  window.addEventListener('DOMContentLoaded', checkMobileNav);
-  checkMobileNav();
-
-  // Hide scroll hint after first scroll
-  document.addEventListener('scroll', function() {
-    const hint = document.getElementById('scrollHint');
-    if (hint) hint.style.display = 'none';
-  }, { once: true, passive: true });
-
-  // Also handle touch scroll on table
-  document.addEventListener('DOMContentLoaded', function() {
-    const wrap = document.querySelector('.scroll-x');
-    if (wrap) {
-      wrap.addEventListener('touchstart', function() {
-        const hint = document.getElementById('scrollHint');
-        if (hint) hint.style.display = 'none';
-      }, { once: true, passive: true });
-    }
-  });
-
-  window.mobileScrollTo = function(key) {
-    const targets = {
-      chain:   () => document.querySelector('#tableContainer, .section-panel'),
-      ai:      () => document.querySelector('.ai-panel'),
-      unusual: () => document.querySelector('.unusual-panel, #unusualBody'),
-      wa:      () => document.querySelector('.wa-panel, #waBody')
-    };
-    // Find all section panels and match by header text
-    const panels = document.querySelectorAll('.section-panel');
-    const textMap = { chain:'OPTION CHAIN', ai:'AI MARKET', unusual:'UNUSUAL', wa:'WHATSAPP' };
-    let found = null;
-    panels.forEach(p => {
-      if (textMap[key] && p.textContent.toUpperCase().includes(textMap[key])) found = p;
-    });
-    if (!found && targets[key]) found = targets[key]();
-    if (found) found.scrollIntoView({behavior:'smooth', block:'start'});
-  };
-})();
 /* ══════════════════════════════════════════════════════
    MASTER SIGNAL TESTER (Tracks ALL 4 Engines)
 ══════════════════════════════════════════════════════ */
@@ -9794,11 +9716,11 @@ function updateSignalLogs(currentSpot) {
 
     log.currentSpot = currentSpot;
     const move = currentSpot - log.entrySpot;
-    const favorable = log.type === 'BULL' ? move : -move;
-    const adverse   = log.type === 'BULL' ? move : -move;
+    const favorable = log.type === 'BULL' ?  move : -move;
+    const adverse   = log.type === 'BULL' ? -move :  move;  // FIX: adverse = opposite of favorable
 
     if (favorable > log.maxFavorable) log.maxFavorable = favorable;
-    if (adverse   < log.maxAdverse)   log.maxAdverse   = adverse;
+    if (adverse   > log.maxAdverse)   log.maxAdverse   = adverse;  // FIX: max (worst case)
   });
   renderSignalLogs();
 }
@@ -9825,7 +9747,7 @@ function renderSignalLogs() {
     const currMove  = isBull ? (log.currentSpot - log.entrySpot) : (log.entrySpot - log.currentSpot);
     const currColor = currMove > 0 ? '#00e5a0' : currMove < 0 ? '#ff3d6b' : 'var(--muted)';
     const favColor  = log.maxFavorable > 5  ? '#00e5a0' : 'var(--muted)';
-    const advColor  = log.maxAdverse   < -5 ? '#ff3d6b' : 'var(--muted)';
+    const advColor  = log.maxAdverse   > 5  ? '#ff3d6b' : 'var(--muted)';
     const pnlStr    = `${currMove >= 0 ? '+' : ''}${currMove.toFixed(1)}`;
 
     return `<tr style="border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:10px;">
@@ -9835,7 +9757,7 @@ function renderSignalLogs() {
       <td style="padding:5px 8px;">${log.entrySpot.toFixed(1)}</td>
       <td style="padding:5px 8px;color:${currColor};font-weight:bold;">${log.currentSpot.toFixed(1)} <span style="font-size:11px;">(${pnlStr})</span></td>
       <td style="padding:5px 8px;color:${favColor};">+${log.maxFavorable.toFixed(1)}</td>
-      <td style="padding:5px 8px;color:${advColor};">${log.maxAdverse.toFixed(1)}</td>
+      <td style="padding:5px 8px;color:${advColor};">−${log.maxAdverse.toFixed(1)}</td>
       <td style="padding:5px 8px;color:var(--muted);font-size:11px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${log.notes}">${log.notes}</td>
     </tr>`;
   }).join('');
@@ -9851,7 +9773,88 @@ function exportSignalLogs() {
 // [duplicate checkAndLogSignals removed]
 
 // [old updateSignalLogs removed]
+
+/* ══ MOBILE NAV ══════════════════════════════════════ */
+(function(){
+  function checkMobileNav() {
+    const nav = document.getElementById('mobileNav');
+    if (!nav) return;
+    if (window.innerWidth <= 768) {
+      nav.style.display = 'block';
+      document.querySelector('.app').style.paddingBottom = '72px';
+      const hint = document.getElementById('scrollHint');
+      if (hint) hint.style.display = 'block';
+    } else {
+      nav.style.display = 'none';
+      document.querySelector('.app').style.paddingBottom = '0';
+      const hint = document.getElementById('scrollHint');
+      if (hint) hint.style.display = 'none';
+    }
+  }
+  window.addEventListener('resize', checkMobileNav);
+  window.addEventListener('DOMContentLoaded', checkMobileNav);
+  checkMobileNav();
+
+  document.addEventListener('scroll', function() {
+    const hint = document.getElementById('scrollHint');
+    if (hint) hint.style.display = 'none';
+  }, { once: true, passive: true });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const wrap = document.querySelector('.scroll-x');
+    if (wrap) {
+      wrap.addEventListener('touchstart', function() {
+        const hint = document.getElementById('scrollHint');
+        if (hint) hint.style.display = 'none';
+      }, { once: true, passive: true });
+    }
+  });
+
+  window.mobileScrollTo = function(key) {
+    const targets = {
+      chain:   () => document.querySelector('#tableContainer, .section-panel'),
+      ai:      () => document.querySelector('.ai-panel'),
+      unusual: () => document.querySelector('.unusual-panel, #unusualBody'),
+      wa:      () => document.querySelector('.wa-panel, #waBody')
+    };
+    const panels = document.querySelectorAll('.section-panel');
+    const textMap = { chain:'OPTION CHAIN', ai:'AI MARKET', unusual:'UNUSUAL', wa:'WHATSAPP' };
+    let found = null;
+    panels.forEach(p => {
+      if (textMap[key] && p.textContent.toUpperCase().includes(textMap[key])) found = p;
+    });
+    if (!found && targets[key]) found = targets[key]();
+    if (found) found.scrollIntoView({behavior:'smooth', block:'start'});
+  };
+})();
 </script>
+
+<div id="mobileNav" style="
+  display:none;
+  position:fixed; bottom:0; left:0; right:0; z-index:200;
+  background:rgba(7,11,18,.97);
+  border-top:1px solid var(--border2);
+  padding:8px 0 env(safe-area-inset-bottom,8px);
+  backdrop-filter:blur(20px);
+">
+  <div style="display:flex; justify-content:space-around; align-items:center;">
+    <button onclick="mobileScrollTo('chain')" style="background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">
+      <span style="font-size:18px;">📊</span>CHAIN
+    </button>
+    <button onclick="mobileScrollTo('ai')" style="background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">
+      <span style="font-size:18px;">🧠</span>AI
+    </button>
+    <button onclick="fetchChain()" style="background:var(--accent);border:none;color:#000;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 20px;border-radius:20px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:1px;">
+      <span style="font-size:16px;">⟳</span>REFRESH
+    </button>
+    <button onclick="mobileScrollTo('unusual')" style="background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">
+      <span style="font-size:18px;">🔥</span>ALERTS
+    </button>
+    <button onclick="mobileScrollTo('wa')" style="background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;">
+      <span style="font-size:18px;">💬</span>WA
+    </button>
+  </div>
+</div>
 
 </body>
 </html>
